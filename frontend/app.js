@@ -136,7 +136,7 @@ function renderGoogleButtons() {
     if (googleLoginBtnArea) {
         google.accounts.id.renderButton(
             googleLoginBtnArea,
-            { theme: "outline", size: "large", text: "continue_with", shape: "pill" }
+            { theme: "outline", size: "large", text: "signin", shape: "pill" }
         );
     }
     
@@ -257,6 +257,13 @@ if(mobileMenuBtn) {
 document.addEventListener("click", (e) => {
     if (userProfile && !userProfile.contains(e.target)) {
         if(profileDropdown) profileDropdown.classList.add("hidden");
+    }
+    
+    // Tutup mobile menu jika klik di luar
+    if (mobileMenu && mobileMenuBtn && !mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+        if (!mobileMenu.classList.contains("translate-x-full")) {
+            mobileMenu.classList.add("translate-x-full");
+        }
     }
 });
 

@@ -15,6 +15,10 @@ from google.auth.transport import requests as google_requests
 from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
 
+# Perbaikan path untuk Vercel (karena dieksekusi dari root folder)
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 # Import Database & Models
 from database import engine, get_db
 import models

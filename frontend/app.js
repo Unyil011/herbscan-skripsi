@@ -128,7 +128,7 @@ function renderGoogleButtons() {
     
     // Inisialisasi Google Auth
     google.accounts.id.initialize({
-        client_id: "917872081065-5q94ice6vqn1rf70pb7se9rprgvdnjos.apps.googleusercontent.com",
+        client_id: "287994839540-kf3i2d95ad5ef8m2gkhkeprivqqnt76f.apps.googleusercontent.com",
         callback: handleCredentialResponse
     });
 

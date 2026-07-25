@@ -35,7 +35,7 @@ ALGORITHM = "HS256"
 security = HTTPBearer(auto_error=False)
 
 # Google Client ID (Disesuaikan dengan kredensial Google Cloud Anda)
-GOOGLE_CLIENT_ID = "GANTI_DENGAN_GOOGLE_CLIENT_ID_ANDA.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = "287994839540-kf3i2d95ad5ef8m2gkhkeprivqqnt76f.apps.googleusercontent.com"
 
 # Coba memuat dotenv dan google-generativeai
 try:
@@ -213,11 +213,10 @@ async def auth_google(request_data: dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Token tidak ditemukan")
 
     try:
-        # Verifikasi token Google
-        # Dalam skripsi/development, kita bisa bypass verifikasi audiens jika belum ada Client ID asli
+        # Verifikasi token Google dengan Client ID asli
         idinfo = id_token.verify_oauth2_token(
             token, google_requests.Request(), 
-            # audience=GOOGLE_CLIENT_ID # Uncomment ini saat diproduksi dengan Client ID asli
+            audience=GOOGLE_CLIENT_ID
         )
         
         email = idinfo.get("email")

@@ -1,0 +1,28 @@
+# Environment Variables / Rahasia
+.env
+backend/.env
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Database Lokal (SQLite)
+*.db
+backend/*.db
+backend/herbscan.db
+backend/spiceguard.db
+
+# File Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Folder Upload Gambar (Lokal)
+backend/uploads/
+uploads/
+
+# OS Files
+.DS_Store
+Thumbs.db

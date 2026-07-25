@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerbScan</title>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Script HTML2PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        if (localStorage.theme === 'light') { document.documentElement.classList.remove('dark') } else { document.documentElement.classList.add('dark') }
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        forest: {
+                            900: '#064e3b',
+                            800: '#065f46',
+                            700: '#047857',
+                        },
+                        glass: {
+                            light: 'rgba(255, 255, 255, 0.1)',
+                            border: 'rgba(255, 255, 255, 0.2)'
+                        }
+                    },
+                    backgroundImage: {
+                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS (untuk animasi yang sulit di Tailwind) -->
+    <link rel="stylesheet" href="style.css?v=8">
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen relative flex flex-col font-sans overflow-x-hidden">
+
+    <!-- Latar Belakang Estetik (Gradients & Blobs) -->
+    <div class="fixed inset-0 z-[-1] bg-gray-50 dark:bg-gray-900">
+        <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-forest-800/30 blur-[100px]">
+        </div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-teal-900/40 blur-[120px]">
+        </div>
+    </div>
+
+    <!-- Header Glassmorphism -->
+    <header
+        class="sticky top-0 z-50 backdrop-blur-md bg-gray-50 dark:bg-gray-900/60 border-b border-glass-border px-6 py-4 flex flex-wrap justify-between items-center shadow-lg gap-4">
+        
+        <!-- Logo -->
+        <a href="index.html" class="flex items-center gap-3 hover:opacity-80 transition cursor-pointer">
+            <div
+                class="w-10 h-10 rounded-lg overflow-hidden border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] bg-white flex items-center justify-center">
+                <img src="logo.png" alt="Logo Deteksi Hama" class="w-full h-full object-contain">
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">HerbScan</h1>
+            </div>
+        </a>
+
+        <!-- Main Navigation -->
+        <nav class="hidden md:flex items-center gap-8">
+            <a href="index.html" class="text-gray-600 dark:text-gray-300 hover:text-emerald-400 font-medium transition text-sm">Beranda</a>
+            <a href="scanner.html" class="text-emerald-400 font-bold transition text-sm border-b-2 border-emerald-400 pb-1">Scanner AI</a>
+
+            <a href="riwayat.html" id="nav-history" class="text-gray-600 dark:text-gray-300 hover:text-emerald-400 font-medium transition text-sm hidden">Riwayat</a>
+        </nav>
+
+        <!-- Profil / Login Area -->
+        <div id="auth-container" class="flex items-center gap-4">
+            <button class="theme-toggle hidden md:flex w-10 h-10 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition shadow-sm border border-gray-300 dark:border-gray-700" title="Toggle Theme">
+                <i class="fa-solid fa-sun"></i>
+            </button>
+            <!-- Tombol Login Google (Jika belum login) -->
+            <div id="google-login-btn" class="hidden">
+                <!-- GIS Button dirender di sini oleh JS -->
+            </div>
+
+            <!-- Profil User (Jika sudah login) -->
+            <div id="user-profile"
+                class="hidden flex items-center gap-3 bg-glass-light border border-glass-border px-4 py-2 rounded-full cursor-pointer hover:bg-white/20 transition duration-300 relative">
+                <img id="profile-pic" src="" alt="Profile"
+                    class="w-8 h-8 rounded-full border-2 border-emerald-400 shadow-sm">
+                <span id="profile-name" class="font-medium text-sm text-gray-800 dark:text-gray-100"></span>
+                <i class="fa-solid fa-chevron-down text-xs text-gray-600 dark:text-gray-300"></i>
+
+                <!-- Dropdown Menu -->
+                <div id="profile-dropdown"
+                    class="hidden absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl">
+                    <button id="btn-logout"
+                        class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right-from-bracket w-5"></i> Keluar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu Toggle -->
+            <button id="mobile-menu-btn" class="md:hidden text-gray-600 dark:text-gray-300 hover:text-white text-xl">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Mobile Navigation Menu -->
+    <div id="mobile-menu" class="fixed inset-y-0 right-0 z-40 w-64 bg-gray-50 dark:bg-gray-900/95 backdrop-blur-md border-l border-gray-300 dark:border-gray-700 shadow-2xl transform translate-x-full transition-transform duration-300 md:hidden flex flex-col pt-24 px-6 gap-6">
+        
+        <!-- Mobile Theme Toggle -->
+        <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-3">
+            <span class="text-gray-600 dark:text-gray-300 font-medium text-lg">Tema</span>
+            <button class="theme-toggle w-10 h-10 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition shadow-sm border border-gray-300 dark:border-gray-700" title="Toggle Theme">
+                <i class="fa-solid fa-sun"></i>
+            </button>
+        </div>
+
+        <a href="index.html" class="text-gray-600 dark:text-gray-300 hover:text-emerald-400 font-medium transition text-lg border-b border-gray-200 dark:border-gray-800 pb-3">Beranda</a>
+        <a href="scanner.html" class="text-emerald-400 font-bold transition text-lg border-b border-gray-200 dark:border-gray-800 pb-3">Scanner AI</a>
+
+        <a href="riwayat.html" id="mobile-nav-history" class="text-gray-600 dark:text-gray-300 hover:text-emerald-400 font-medium transition text-lg border-b border-gray-200 dark:border-gray-800 pb-3 hidden">Riwayat</a>
+    </div>
+
+    <!-- Konten Utama -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-5xl">
+
+        <!-- Notifikasi Mengambang -->
+        <div id="toast"
+            class="fixed top-24 right-5 transform translate-x-[150%] transition-transform duration-500 z-50 bg-white dark:bg-gray-800 border-l-4 border-emerald-500 text-gray-900 dark:text-white px-6 py-4 rounded shadow-2xl flex items-center gap-3">
+            <i class="fa-solid fa-circle-check text-emerald-500"></i>
+            <span id="toast-message">Notifikasi</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+
+            <!-- KOLOM KIRI: Unggah Gambar (Glass Card) -->
+            <section
+                class="backdrop-blur-lg bg-glass-light border border-glass-border rounded-2xl p-6 shadow-2xl flex flex-col items-center">
+                <div class="w-full text-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2"><i
+                            class="fa-solid fa-cloud-arrow-up text-emerald-400"></i> Unggah Daun Rempah</h2>
+                    <p class="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">Deteksi instan penyakit Jahe, Kapulaga, dan Kencur.</p>
+                </div>
+
+                <!-- Dropzone -->
+                <div id="dropzone"
+                    class="w-full h-64 border-2 border-dashed border-gray-500 rounded-xl flex flex-col justify-center items-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-900/20 transition-all duration-300 relative overflow-hidden group">
+                    <input type="file" id="file-input" accept="image/*" class="hidden">
+
+                    <div id="dropzone-prompt" class="flex flex-col items-center text-center p-4">
+                        <i
+                            class="fa-regular fa-image text-4xl text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-3 group-hover:text-emerald-400 transition-colors"></i>
+                        <span class="text-gray-600 dark:text-gray-300 font-medium">Klik atau seret gambar ke sini</span>
+                        <span class="text-xs text-gray-400 dark:text-gray-500 mt-2">Mendukung: JPG, PNG, WEBP</span>
+                    </div>
+
+                    <!-- Preview Container -->
+                    <div id="preview-container"
+                        class="hidden absolute inset-0 w-full h-full bg-gray-50 dark:bg-gray-900 z-10 cursor-default">
+                        <img id="image-preview" src="" alt="Preview" class="w-full h-full object-contain" crossorigin="anonymous">
+                        <button id="remove-img-btn"
+                            class="absolute top-2 right-2 bg-red-500/80 hover:bg-red-600 text-gray-900 dark:text-white w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition z-20">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="action-buttons-container" class="w-full mt-6 space-y-3">
+                    <button id="detect-btn" disabled
+                        class="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-forest-700 hover:from-emerald-500 hover:to-forest-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-bold rounded-xl shadow-lg shadow-emerald-900/50 transform transition hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass"></i> Mulai Deteksi
+                    </button>
+
+                    <!-- Tombol Aksi (Kamera & Unggah) selalu tampil -->
+                    <div id="new-actions-container" class="grid grid-cols-2 gap-3 pt-2">
+                        <button id="btn-new-photo"
+                            class="w-full py-2.5 px-3 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-400 dark:border-gray-600 text-emerald-400 font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Galeri
+                        </button>
+                        <button id="btn-open-camera"
+                            class="w-full py-2.5 px-3 bg-emerald-900/50 hover:bg-emerald-800/80 border border-emerald-700/50 text-emerald-300 font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-camera"></i> Kamera
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KOLOM KANAN: Hasil Diagnosis (Glass Card) -->
+            <section id="result-card"
+                class="backdrop-blur-lg bg-glass-light border border-glass-border rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+
+                <!-- State: Placeholder -->
+                <div id="result-placeholder"
+                    class="h-full flex flex-col justify-center items-center text-center space-y-4 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full"></div>
+                        <i class="fa-solid fa-dna text-5xl text-emerald-500/50 animate-pulse relative"></i>
+                    </div>
+                    <h3 class="text-xl font-medium text-gray-600 dark:text-gray-300">Menunggu Deteksi</h3>
+                    <p class="text-sm max-w-xs">Pilih gambar daun lalu tekan tombol mulai deteksi untuk melihat hasil
+                        diagnosis.</p>
+                </div>
+
+                <div id="result-loading"
+                    class="hidden h-full flex flex-col justify-center items-center text-center space-y-6">
+                    <div
+                        class="w-16 h-16 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin">
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Memindai Anatomi Daun...</h3>
+                        <p class="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">Menganalisis pola penyakit</p>
+                    </div>
+                </div>
+
+                <!-- State: Content (Hasil) -->
+                <div id="result-content" class="hidden h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-6 border-b border-gray-300 dark:border-gray-700 pb-4">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check text-emerald-400 text-xl"></i>
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white">Hasil Diagnosis</h2>
+                        </div>
+                        <button id="btn-download-pdf"
+                            class="hidden text-xs bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-400 dark:border-gray-600 px-3 py-1.5 rounded-lg transition flex items-center gap-1"
+                            title="Unduh PDF (Hanya untuk pengguna login)">
+                            <i class="fa-solid fa-file-pdf text-red-400"></i> PDF
+                        </button>
+                    </div>
+
+                    <!-- Panel Statistik Utama -->
+                    <div class="flex items-center gap-6 mb-6">
+                        <!-- Akurasi (Gauge) -->
+                        <div class="relative w-24 h-24 flex-shrink-0">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)"
+                                    stroke-width="8"></circle>
+                                <circle id="progress-ring-bar" cx="50" cy="50" r="45" fill="none" stroke="#34d399"
+                                    stroke-width="8" stroke-linecap="round"
+                                    class="transition-all duration-1000 ease-out" stroke-dasharray="283"
+                                    stroke-dashoffset="283"></circle>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span id="result-confidence" class="text-xl font-bold text-gray-900 dark:text-white">0%</span>
+                            </div>
+                        </div>
+
+                        <!-- Info Penyakit -->
+                        <div id="info-penyakit-container" class="flex-grow">
+                            <div id="plant-info-group" class="mb-3">
+                                <p class="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanaman Terdeteksi</p>
+                                <h3 id="result-plant" class="text-lg font-bold text-emerald-300">-</h3>
+                            </div>
+                            <div id="status-info-group">
+                                <p class="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 uppercase tracking-wider">Diagnosis Klinis</p>
+                                <h3 id="result-status" class="text-xl font-black text-red-400">-</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kotak Rekomendasi Medis -->
+                    <div id="recommendation-box"
+                        class="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 p-4 rounded-xl flex-grow overflow-y-auto custom-scrollbar">
+                        <h4 class="text-sm font-bold text-emerald-400 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-stethoscope"></i> Resep & Penanganan
+                        </h4>
+                        <div id="result-recommendation" class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed"></div>
+                    </div>
+
+                    <!-- Area Bujukan Login (Jika Guest) -->
+                    <div id="login-prompt-area" class="hidden mt-4 pt-4 border-t border-gray-300 dark:border-gray-700 text-center">
+                        <p class="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-2">Simpan hasil diagnosis ini secara permanen?</p>
+                        <div id="google-login-btn-prompt" class="inline-block"></div>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto py-8 border-t border-glass-border bg-gray-50 dark:bg-gray-900/80 backdrop-blur-md">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">HerbScan</h2>
+            <p class="text-sm text-gray-400 dark:text-gray-500 mb-6">Membantu petani rempah melindungi panen mereka dengan teknologi AI terdepan.</p>
+            <p class="text-xs text-gray-600">&copy; 2026 <span class="text-emerald-500 font-bold tracking-widest">RivalRam</span>. Seluruh Hak Cipta Dilindungi.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL RIWAYAT TELAH DIPINDAHKAN KE riwayat.html -->
+
+    <!-- MODAL KAMERA (Hidden by default) -->
+    <div id="camera-modal"
+        class="hidden fixed inset-0 z-[110] flex items-center justify-center backdrop-blur-md bg-black/80 p-4">
+        <div
+            class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-800/50">
+                <h3 class="text-gray-900 dark:text-white font-bold"><i class="fa-solid fa-camera text-emerald-400 mr-2"></i> Ambil Foto
+                    Rempah</h3>
+                <button id="btn-close-camera" class="text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="relative bg-black h-80 flex items-center justify-center">
+                <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+                <div id="camera-loading" class="text-emerald-500 flex flex-col items-center">
+                    <i class="fa-solid fa-spinner animate-spin text-3xl mb-2"></i>
+                    <span class="text-sm">Membuka Kamera...</span>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 dark:bg-gray-900 flex justify-center">
+                <button id="btn-capture-photo"
+                    class="w-16 h-16 bg-white border-4 border-emerald-500 rounded-full hover:bg-gray-200 hover:scale-105 transition-transform flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.5)]"></button>
+            </div>
+            <canvas id="camera-canvas" class="hidden"></canvas>
+        </div>
+    </div>
+
+    <!-- MODAL LOGIN PROMPT (GUEST WARNING) -->
+    <div id="login-modal"
+        class="hidden fixed inset-0 z-[120] flex items-center justify-center backdrop-blur-sm bg-black/60 p-4">
+        <div
+            class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center transform transition-all">
+            <div
+                class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
+                <i class="fa-brands fa-google text-3xl text-blue-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Login Diperlukan</h3>
+            <p class="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-6">Tanpa login, sistem <b>tidak dapat menyimpan riwayat</b> dan fitur
+                <b>Unduh PDF akan dikunci</b>.
+            </p>
+
+            <div class="space-y-3">
+                <!-- Wrapper agar script GIS merender tombol di sini -->
+                <div class="flex justify-center mb-4">
+                    <div id="google-login-modal-btn"></div>
+                </div>
+
+                <div class="relative flex items-center py-2">
+                    <div class="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-400 dark:text-gray-500 text-xs uppercase">Atau</span>
+                    <div class="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
+                </div>
+
+                <button id="btn-continue-guest"
+                    class="w-full py-2 px-4 bg-transparent border border-gray-400 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium rounded-lg transition text-sm">
+                    Lanjutkan Tanpa Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KONTENER EXPORT PDF (Overlay penuh layar saat proses cetak) -->
+    <div id="pdf-export-overlay" class="fixed inset-0 z-[99999] hidden">
+        <!-- Overlay Gelap Penutup Layar -->
+        <div class="absolute inset-0 bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center z-50">
+            <i class="fa-solid fa-file-pdf text-6xl text-red-500 mb-4 animate-bounce"></i>
+            <p class="text-gray-900 dark:text-white text-xl font-bold">Menyiapkan Laporan PDF...</p>
+            <p class="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-2 text-sm">Sistem sedang merender layout resolusi tinggi.</p>
+        </div>
+    </div>
+
+    <!-- Script HTML2PDF untuk Ekspor PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="app.js?v=10"></script>
+</body>
+
+</html>

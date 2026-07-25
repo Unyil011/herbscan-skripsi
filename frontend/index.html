@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beranda - HerbScan AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script>
+        if (localStorage.theme === 'light') { document.documentElement.classList.remove('dark') } else { document.documentElement.classList.add('dark') }
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        glass: { light: 'rgba(255, 255, 255, 0.03)', border: 'rgba(255, 255, 255, 0.05)' }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+
+    <link rel="stylesheet" href="style.css?v=8">
+</head>
+
+<body class="text-gray-800 dark:text-gray-100 flex flex-col min-h-screen">
+
+    <!-- Toast Notification -->
+    <div id="toast"
+        class="fixed bottom-6 right-6 z-[200] transform translate-x-[150%] transition-transform duration-300 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <span id="toast-message" class="font-medium text-sm"></span>
+    </div>
+
+    <!-- Header Glassmorphism -->
+    <header
+        class="sticky top-0 z-50 backdrop-blur-md bg-gray-50 dark:bg-gray-900/60 border-b border-glass-border px-6 py-4 flex flex-wrap justify-between items-center shadow-lg gap-4">
+
+        <!-- Logo -->
+        <a href="index.html" class="flex items-center gap-3 hover:opacity-80 transition cursor-pointer">
+            <div
+                class="w-10 h-10 rounded-lg overflow-hidden border-2 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] bg-white flex items-center justify-center">
+                <img src="logo.png" alt="Logo Deteksi Hama" class="w-full h-full object-contain">
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">HerbScan</h1>
+            </div>
+        </a>
+
+        <!-- Main Navigation -->
+        <nav class="hidden md:flex items-center gap-8">
+            <a href="index.html"
+                class="text-emerald-400 font-bold transition text-sm border-b-2 border-emerald-400 pb-1">Beranda</a>
+            <a href="scanner.html" class="text-gray-600 dark:text-gray-300 hover:text-emerald-400 font-medium transition text-sm">Scanner
+                AI</a>
+
+            <a href="riwayat.html" id="nav-history"
+                class="text-gray-600 dark:text-gray-300 hover:text-emerald-400 font-medium transition text-sm hidden">Riwayat</a>
+        </nav>
+
+        <!-- Profil / Login Area -->
+        <div id="auth-container" class="flex items-center gap-4">
+            <button class="theme-toggle hidden md:flex w-10 h-10 rounded-full items-center justify-center bg-white dark:bg-gray-800 text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition shadow-sm border border-gray-300 dark:border-gray-700" title="Toggle Theme">
+                <i class="fa-solid fa-sun"></i>
+            </button>
+            <div id="google-login-btn" class="hidden"></div>
+
+            <div id="user-profile"
+                class="hidden flex items-center gap-3 bg-glass-light border border-glass-border px-4 py-2 rounded-full cursor-pointer hover:bg-white/20 transition duration-300 relative">
+                <img id="profile-pic" src="" alt="Profile"
+                    class="w-8 h-8 rounded-full border-2 border-emerald-400 shadow-sm">
+                <span id="profile-name" class="font-medium text-sm text-gray-800 dark:text-gray-100"></span>
+                <i class="fa-solid fa-chevron-down text-xs text-gray-600 dark:text-gray-300"></i>
+
+                <div id="profile-dropdown"
+                    class="hidden absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl">
+                    <button id="btn-logout"
+                        class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right-from-bracket w-5"></i> Keluar
+                    </button>
+                </div>
+            </div>
+
+            <button id="mobile-menu-btn" class="md:hidden text-gray-600 dark:text-gray-300 hover:text-white text-xl">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Menu -->
+    <div id="mobile-menu"
+        class="fixed inset-y-0 right-0 z-40 w-64 bg-gray-50 dark:bg-gray-900/95 backdrop-blur-md border-l border-gray-300 dark:border-gray-700 shadow-2xl transform translate-x-full transition-transform duration-300 md:hidden flex flex-col pt-24 px-6 gap-6">
+        
+        <!-- Mobile Theme Toggle -->
+        <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-3">
+            <span class="text-gray-600 dark:text-gray-300 font-medium text-lg">Tema</span>
+            <button class="theme-toggle w-10 h-10 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition shadow-sm border border-gray-300 dark:border-gray-700" title="Toggle Theme">
+                <i class="fa-solid fa-sun"></i>
+            </button>
+        </div>
+
+        <a href="index.html"
+            class="text-emerald-400 font-bold transition text-lg border-b border-gray-200 dark:border-gray-800 pb-3">Beranda</a>
+        <a href="scanner.html"
+            class="text-gray-600 dark:text-gray-300 hover:text-emerald-400 font-medium transition text-lg border-b border-gray-200 dark:border-gray-800 pb-3">Scanner
+            AI</a>
+
+        <a href="riwayat.html" id="mobile-nav-history"
+            class="text-gray-600 dark:text-gray-300 hover:text-emerald-400 font-medium transition text-lg border-b border-gray-200 dark:border-gray-800 pb-3 hidden">Riwayat</a>
+    </div>
+
+    <!-- HERO SECTION -->
+    <main class="pt-15 pb-6 relative overflow-hidden">
+        <!-- Dekorasi Background -->
+        <div class="absolute top-1/4 left-10 w-72 h-72 bg-emerald-600/20 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-1/4 right-10 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px]"></div>
+
+        <div class="container mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center gap-12">
+            <!-- Teks Konten -->
+            <div class="w-full md:w-1/2 text-center md:text-left" data-aos="fade-right" data-aos-duration="1000">
+                <div
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-glass-light border border-glass-border mb-6 backdrop-blur-md">
+                    <i class="fa-solid fa-microchip text-emerald-400"></i>
+                    <!-- <span class="text-sm font-medium text-emerald-400">Didukung oleh Gemini AI</span> -->
+                </div>
+
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+                    Deteksi Penyakit <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Tanaman
+                        Rempah</span> <br>
+                    dalam Hitungan Detik
+                </h1>
+
+                <p class="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-xl mx-auto md:mx-0 leading-relaxed">
+                    Sebagai rilis versi pertama, website kami baru difokuskan khusus untuk 3 tanaman yaitu <b>Jahe,
+                        Kapulaga,</b> dan <b>Kencur</b>. <br>
+                    Anda hanya perlu unggah foto daun yang di duga sakit lalu sistem akan memberikan diagnosis beserta
+                    rekomendasi penanganan instan.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                    <a href="scanner.html"
+                        class="px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-gray-900 dark:text-white rounded-xl font-semibold transition-all transform hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/30 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-camera-retro"></i> Coba Sekarang
+                    </a>
+                    <a href="#fitur"
+                        class="px-8 py-4 bg-white dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl font-semibold transition-all backdrop-blur-md flex items-center justify-center gap-2">
+                        Pelajari Lebih Lanjut
+                    </a>
+                </div>
+            </div>
+
+            <!-- Ilustrasi / Gambar (Desain Logo Asli) -->
+            <div class="flex-1 relative animate-float hidden md:block" data-aos="fade-left" data-aos-duration="1000"
+                data-aos-delay="200">
+                <div class="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full"></div>
+                <img src="logo.png" alt="HerbScan AI" class="relative z-10 w-full max-w-sm mx-auto drop-shadow-2xl">
+                <!-- Floating badges -->
+                <div
+                    class="absolute top-10 -left-10 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 p-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md">
+                    <div
+                        class="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">Akurasi</p>
+                        <p class="font-bold text-gray-900 dark:text-white">Tinggi</p>
+                    </div>
+                </div>
+                <div
+                    class="absolute bottom-20 -right-10 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 p-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md">
+                    <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400"><i
+                            class="fa-solid fa-file-pdf"></i></div>
+                    <div>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">Ekspor Laporan</p>
+                        <p class="font-bold text-gray-900 dark:text-white">PDF</p>
+                    </div>
+                </div>
+                <!-- Badge Ketiga: Riwayat -->
+                <div
+                    class="absolute bottom-10 -left-5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 p-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md animate-pulse">
+                    <div class="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">Penyimpanan</p>
+                        <p class="font-bold text-gray-900 dark:text-white">Riwayat</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FITUR SECTION -->
+    <section id="fitur" class="py-20 relative border-t border-gray-200 dark:border-gray-800">
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">Mengapa Menggunakan HerbScan?</h2>
+                <p class="text-gray-400 dark:text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Sistem kami didesain khusus untuk membantu petani rempah
+                    meningkatkan kualitas panen dengan penanganan dini yang tepat.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Fitur 1 -->
+                <div class="bg-white dark:bg-gray-800/50 backdrop-blur-md border border-gray-300 dark:border-gray-700 p-8 rounded-2xl hover:-translate-y-2 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300"
+                    data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-14 h-14 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-bolt text-emerald-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Deteksi Instan</h3>
+                    <p class="text-gray-400 dark:text-gray-500 dark:text-gray-400 leading-relaxed">Hanya butuh beberapa detik bagi AI kami untuk memproses
+                        gambar dan memberikan diagnosis akurat secara real-time.</p>
+                </div>
+
+                <!-- Fitur 2 -->
+                <div class="bg-white dark:bg-gray-800/50 backdrop-blur-md border border-gray-300 dark:border-gray-700 p-8 rounded-2xl hover:-translate-y-2 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300"
+                    data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-bullseye text-blue-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Akurasi Tinggi</h3>
+                    <p class="text-gray-400 dark:text-gray-500 dark:text-gray-400 leading-relaxed">Model kecerdasan buatan dilatih dengan ribuan dataset
+                        spesifik penyakit daun jahe, kencur, dan kapulaga.</p>
+                </div>
+
+                <!-- Fitur 3 -->
+                <div class="bg-white dark:bg-gray-800/50 backdrop-blur-md border border-gray-300 dark:border-gray-700 p-8 rounded-2xl hover:-translate-y-2 hover:shadow-xl hover:shadow-teal-500/10 transition-all duration-300"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-14 h-14 bg-teal-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-book-medical text-teal-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Solusi Terarah</h3>
+                    <p class="text-gray-400 dark:text-gray-500 dark:text-gray-400 leading-relaxed">Tidak hanya mendeteksi, kami juga memberikan rekomendasi
+                        penanganan akademis yang valid untuk mengobati tanaman.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CARA KERJA SECTION -->
+    <section id="cara-kerja" class="py-20 relative border-t border-gray-200 dark:border-gray-800">
+        <div class="container mx-auto px-6 relative z-10">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-16" data-aos="fade-up">Bagaimana Cara
+                Kerjanya?</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+
+                <!-- Step 1 -->
+                <div class="bg-white dark:bg-gray-800/50 backdrop-blur-md border border-gray-300 dark:border-gray-700 p-8 rounded-2xl hover:-translate-y-2 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300"
+                    data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-14 h-14 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-camera text-emerald-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">1. Ambil Foto</h3>
+                    <p class="text-gray-400 dark:text-gray-500 dark:text-gray-400 leading-relaxed">Unggah atau potret langsung daun rempah
+                        (Jahe/Kencur/Kapulaga) yang terindikasi sakit.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-white dark:bg-gray-800/50 backdrop-blur-md border border-gray-300 dark:border-gray-700 p-8 rounded-2xl hover:-translate-y-2 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300"
+                    data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-brain text-blue-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">2. Analisis AI</h3>
+                    <p class="text-gray-400 dark:text-gray-500 dark:text-gray-400 leading-relaxed">Model AI canggih akan secara otomatis menyeleksi dan
+                        mendiagnosis patogen pada daun.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-white dark:bg-gray-800/50 backdrop-blur-md border border-gray-300 dark:border-gray-700 p-8 rounded-2xl hover:-translate-y-2 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-file-prescription text-amber-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">3. Dapatkan Hasil</h3>
+                    <p class="text-gray-400 dark:text-gray-500 dark:text-gray-400 leading-relaxed">Hasil deteksi, rekomendasi pengobatan, serta dokumen
+                        riwayat langsung tersedia untuk Anda.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto py-8 border-t border-glass-border bg-gray-50 dark:bg-gray-900/80 backdrop-blur-md">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">HerbScan</h2>
+            <p class="text-sm text-gray-400 dark:text-gray-500 mb-6">Membantu petani rempah melindungi panen mereka dengan teknologi AI
+                terdepan.</p>
+            <p class="text-xs text-gray-600">&copy; 2026 <span
+                    class="text-emerald-500 font-bold tracking-widest">RivalRam</span>. Seluruh Hak Cipta Dilindungi.
+            </p>
+        </div>
+    </footer>
+
+    <script src="app.js?v=10"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            once: false,
+            offset: 50,
+            duration: 800,
+            easing: 'ease-out-cubic',
+        });
+    </script>
+</body>
+
+</html>

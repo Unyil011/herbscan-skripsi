@@ -1,0 +1,15 @@
+# Core AI & Vision Dependencies
+google-generativeai>=0.8.0
+Pillow>=9.0.0
+python-dotenv>=1.0.0
+
+# Backend API Dependencies
+fastapi>=0.80.0
+uvicorn[standard]>=0.18.0
+python-multipart>=0.0.5
+
+# Database & Authentication (SaaS Features)
+sqlalchemy>=2.0.0
+google-auth>=2.20.0
+PyJWT>=2.8.0
+psycopg2-binary>=2.9.0

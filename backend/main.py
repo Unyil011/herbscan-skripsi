@@ -20,7 +20,10 @@ from database import engine, get_db
 import models
 
 # Inisialisasi Tabel Database
-models.Base.metadata.create_all(bind=engine)
+try:
+    models.Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print("WARNING: Gagal inisialisasi tabel database saat boot:", e)
 
 # Konfigurasi JWT
 SECRET_KEY = "SPICEGUARD_THESIS_SECRET_KEY"

@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/main.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/main.py"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "backend/main.py"
+    },
+    {
+      "src": "/auth/(.*)",
+      "dest": "backend/main.py"
+    },
+    {
+      "src": "/history(.*)",
+      "dest": "backend/main.py"
+    },
+    {
+      "src": "/predict",
+      "dest": "backend/main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/"
+    }
+  ],
+  "env": {
+    "VERCEL": "1"
+  }
+}

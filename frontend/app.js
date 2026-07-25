@@ -1,5 +1,5 @@
-// Konstanta Backend URL
-const BACKEND_URL = "http://127.0.0.1:8000";
+// Konstanta Backend URL (Kosong = gunakan domain yang sama)
+const BACKEND_URL = "";
 
 // --- REFERENSI DOM UTAMA ---
 const dropzone = document.getElementById("dropzone");

@@ -65,8 +65,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Deteksi lingkungan Vercel
+IS_VERCEL = os.environ.get("VERCEL") == "1"
+UPLOAD_DIR = "/tmp" if IS_VERCEL else ("backend/uploads" if os.path.exists("backend/uploads") else "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 # Sajikan folder uploads ke publik (Frontend)
-app.mount("/uploads", StaticFiles(directory="backend/uploads" if os.path.exists("backend/uploads") else "uploads"), name="uploads")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # System Prompt untuk AI sebagai Pakar Botani & Patologi Tanaman Rempah
 SYSTEM_PROMPT = """
@@ -333,7 +338,7 @@ async def predict(
         
         # Simpan gambar fisik ke folder uploads
         image_filename = f"{uuid.uuid4().hex}.jpg"
-        upload_path = os.path.join("backend" if os.path.exists("backend/uploads") else ".", "uploads", image_filename)
+        upload_path = os.path.join(UPLOAD_DIR, image_filename)
         image.save(upload_path, format="JPEG", quality=85)
         
     except Exception as e:

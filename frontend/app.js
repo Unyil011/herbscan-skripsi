@@ -1,7 +1,5 @@
 // Konstanta Backend URL (Kosong = gunakan domain yang sama)
-const BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
-    ? "http://localhost:8000" 
-    : "https://herbscan-skripsi.vercel.app";
+const BACKEND_URL = "https://herbscan-skripsi.vercel.app";
 
 // --- REFERENSI DOM UTAMA ---
 const dropzone = document.getElementById("dropzone");

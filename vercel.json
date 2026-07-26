@@ -28,6 +28,10 @@
       "dest": "backend/main.py"
     },
     {
+      "src": "/admin/(.*)",
+      "dest": "backend/main.py"
+    },
+    {
       "src": "/predict",
       "dest": "backend/main.py"
     },

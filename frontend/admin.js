@@ -52,16 +52,25 @@ function renderFilterInputs() {
     
     let html = "";
     if (mode === "daily") {
-        html = `<input type="date" id="val-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${todayStr}">`;
+        html = `
+            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Tanggal:</span>
+            <input type="date" id="val-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${todayStr}">
+        `;
     } else if (mode === "weekly") {
         html = `
-            <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Mulai:</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">Mulai (1 Minggu):</span>
             <input type="date" id="val-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${todayStr}">
         `;
     } else if (mode === "monthly") {
-        html = `<input type="month" id="val-month" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${todayMonthStr}">`;
+        html = `
+            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Bulan:</span>
+            <input type="month" id="val-month" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${todayMonthStr}">
+        `;
     } else if (mode === "yearly") {
-        html = `<input type="number" id="val-year" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${yyyy}" min="2020" max="2100">`;
+        html = `
+            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Tahun:</span>
+            <input type="number" id="val-year" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${yyyy}" min="2020" max="2100">
+        `;
     }
     
     filterInputContainer.innerHTML = html;

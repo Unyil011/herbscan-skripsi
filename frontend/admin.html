@@ -132,8 +132,8 @@
                         <h2 id="page-title" class="text-xl font-bold text-gray-900 dark:text-white">Ringkasan Pemantauan</h2>
                     </div>
                     
-                    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                        <div class="flex items-center gap-2 flex-1 min-w-[140px]">
+                    <div class="flex flex-wrap items-end gap-3 w-full lg:w-auto">
+                        <div class="flex flex-col gap-1 flex-1 min-w-[140px]">
                             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Mode:</span>
                             <select id="filter-mode" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
                                 <option value="daily">Harian</option>
@@ -143,11 +143,11 @@
                             </select>
                         </div>
                         
-                        <div id="filter-input-container" class="flex items-center gap-2 flex-1 min-w-[140px]">
+                        <div id="filter-input-container" class="flex flex-col gap-1 flex-1 min-w-[140px]">
                             <!-- Input Tanggal Dinamis dari JS -->
                         </div>
                         
-                        <div class="flex items-center gap-2 flex-1 min-w-[160px]">
+                        <div class="flex flex-col gap-1 flex-1 min-w-[160px]">
                             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Kecamatan:</span>
                             <select id="filter-location" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
                                 <option value="">Semua Lokasi</option>
@@ -155,7 +155,7 @@
                             </select>
                         </div>
                         
-                        <button id="btn-filter" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center gap-2">
+                        <button id="btn-filter" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center gap-2 h-[38px]">
                             <i class="fa-solid fa-filter"></i> Terapkan
                         </button>
                     </div>

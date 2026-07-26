@@ -481,18 +481,32 @@ async def predict(
 
 from sqlalchemy import extract, func
 
+from datetime import datetime, timedelta
+
 @app.get("/admin/stats")
 async def get_admin_stats(
-    month: int = None,
-    year: int = None,
+    start_date: str = None,
+    end_date: str = None,
+    location: str = None,
     admin_user: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
     query = db.query(models.History)
-    if month:
-        query = query.filter(extract('month', models.History.created_at) == month)
-    if year:
-        query = query.filter(extract('year', models.History.created_at) == year)
+    
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(models.History.created_at >= start)
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            query = query.filter(models.History.created_at < end)
+        except ValueError:
+            pass
+    if location and location != "":
+        query = query.filter(models.History.location == location)
         
     total_scans = query.count()
     
@@ -500,40 +514,40 @@ async def get_admin_stats(
     total_users = db.query(models.User).count()
     
     # Penyakit terbanyak
-    disease_counts = db.query(
-        models.History.disease_class, 
-        func.count(models.History.id).label('count')
-    )
-    if month: disease_counts = disease_counts.filter(extract('month', models.History.created_at) == month)
-    if year: disease_counts = disease_counts.filter(extract('year', models.History.created_at) == year)
-    disease_counts = disease_counts.group_by(models.History.disease_class).order_by(func.count(models.History.id).desc()).all()
+    disease_counts_query = db.query(models.History.disease_class, func.count(models.History.id).label('count'))
+    if start_date or end_date or location:
+        if start_date: disease_counts_query = disease_counts_query.filter(models.History.created_at >= start)
+        if end_date: disease_counts_query = disease_counts_query.filter(models.History.created_at < end)
+        if location and location != "": disease_counts_query = disease_counts_query.filter(models.History.location == location)
+    disease_counts = disease_counts_query.group_by(models.History.disease_class).order_by(func.count(models.History.id).desc()).all()
     
     # Tanaman terbanyak
-    plant_counts = db.query(
-        models.History.plant_name, 
-        func.count(models.History.id).label('count')
-    )
-    if month: plant_counts = plant_counts.filter(extract('month', models.History.created_at) == month)
-    if year: plant_counts = plant_counts.filter(extract('year', models.History.created_at) == year)
-    plant_counts = plant_counts.group_by(models.History.plant_name).order_by(func.count(models.History.id).desc()).all()
+    plant_counts_query = db.query(models.History.plant_name, func.count(models.History.id).label('count'))
+    if start_date or end_date or location:
+        if start_date: plant_counts_query = plant_counts_query.filter(models.History.created_at >= start)
+        if end_date: plant_counts_query = plant_counts_query.filter(models.History.created_at < end)
+        if location and location != "": plant_counts_query = plant_counts_query.filter(models.History.location == location)
+    plant_counts = plant_counts_query.group_by(models.History.plant_name).order_by(func.count(models.History.id).desc()).all()
     
     # Lokasi rawan (Kecamatan)
-    location_counts = db.query(
-        models.History.location, 
+    location_counts_query = db.query(models.History.location, func.count(models.History.id).label('count'))
+    if start_date or end_date:
+        if start_date: location_counts_query = location_counts_query.filter(models.History.created_at >= start)
+        if end_date: location_counts_query = location_counts_query.filter(models.History.created_at < end)
+    location_counts = location_counts_query.group_by(models.History.location).order_by(func.count(models.History.id).desc()).all()
+
+    # Tren (Harian)
+    trend_query = db.query(
+        func.date(models.History.created_at).label('date'),
         func.count(models.History.id).label('count')
     )
-    if month: location_counts = location_counts.filter(extract('month', models.History.created_at) == month)
-    if year: location_counts = location_counts.filter(extract('year', models.History.created_at) == year)
-    location_counts = location_counts.group_by(models.History.location).order_by(func.count(models.History.id).desc()).all()
-
-    # Tren per bulan (Jika filter tahun aktif)
-    monthly_trends = []
-    if year:
-        trend_query = db.query(
-            extract('month', models.History.created_at).label('month'),
-            func.count(models.History.id).label('count')
-        ).filter(extract('year', models.History.created_at) == year).group_by('month').order_by('month').all()
-        monthly_trends = [{"month": int(row.month), "count": row.count} for row in trend_query]
+    if start_date or end_date or location:
+        if start_date: trend_query = trend_query.filter(models.History.created_at >= start)
+        if end_date: trend_query = trend_query.filter(models.History.created_at < end)
+        if location and location != "": trend_query = trend_query.filter(models.History.location == location)
+    trend_query = trend_query.group_by(func.date(models.History.created_at)).order_by(func.date(models.History.created_at)).all()
+    
+    daily_trends = [{"date": str(row.date), "count": row.count} for row in trend_query]
 
     # Data Map Points (Lat/Lng)
     map_points = query.filter(models.History.lat.isnot(None), models.History.lng.isnot(None)).with_entities(
@@ -548,15 +562,16 @@ async def get_admin_stats(
             "diseases": [{"name": r[0], "count": r[1]} for r in disease_counts],
             "plants": [{"name": r[0], "count": r[1]} for r in plant_counts],
             "locations": [{"name": r[0], "count": r[1]} for r in location_counts],
-            "monthly_trends": monthly_trends,
+            "trends": daily_trends,
             "map_points": [{"lat": r[0], "lng": r[1], "disease": r[2]} for r in map_points]
         }
     }
 
 @app.get("/admin/history")
 async def get_admin_history(
-    month: int = None,
-    year: int = None,
+    start_date: str = None,
+    end_date: str = None,
+    location: str = None,
     admin_user: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -570,10 +585,20 @@ async def get_admin_history(
         models.History.confidence
     ).join(models.User, models.History.user_id == models.User.id)
     
-    if month:
-        query = query.filter(extract('month', models.History.created_at) == month)
-    if year:
-        query = query.filter(extract('year', models.History.created_at) == year)
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(models.History.created_at >= start)
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            query = query.filter(models.History.created_at < end)
+        except ValueError:
+            pass
+    if location and location != "":
+        query = query.filter(models.History.location == location)
         
     histories = query.order_by(models.History.created_at.desc()).all()
     
@@ -587,6 +612,46 @@ async def get_admin_history(
             "plant": h.plant_name,
             "disease": h.disease_class,
             "confidence": f"{h.confidence:.1f}%" if h.confidence else "N/A"
+        })
+        
+    return {
+        "status": "success",
+        "data": result
+    }
+
+@app.delete("/admin/history/{history_id}")
+async def delete_admin_history(
+    history_id: int,
+    admin_user: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db)
+):
+    history_obj = db.query(models.History).filter(models.History.id == history_id).first()
+    if not history_obj:
+        raise HTTPException(status_code=404, detail="Riwayat tidak ditemukan")
+    
+    db.delete(history_obj)
+    db.commit()
+    return {"status": "success", "message": "Riwayat berhasil dihapus"}
+
+@app.get("/admin/users")
+async def get_admin_users(
+    admin_user: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db)
+):
+    users = db.query(models.User).order_by(models.User.created_at.desc()).all()
+    
+    result = []
+    for u in users:
+        # Cari lokasi terakhir (Kecamatan) dari history
+        last_history = db.query(models.History).filter(models.History.user_id == u.id).order_by(models.History.created_at.desc()).first()
+        last_location = last_history.location if last_history else "Belum Pernah Scan"
+        
+        result.append({
+            "id": u.id,
+            "name": u.name,
+            "email": u.email,
+            "created_at": u.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "last_location": last_location
         })
         
     return {

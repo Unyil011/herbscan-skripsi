@@ -65,15 +65,15 @@
             </div>
             
             <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <a href="#" class="flex items-center gap-3 px-4 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl font-medium">
-                    <i class="fa-solid fa-chart-pie w-5"></i> Ringkasan
-                </a>
-                <a href="#section-map" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl font-medium transition">
-                    <i class="fa-solid fa-map-location-dot w-5"></i> Peta Sebaran
-                </a>
-                <a href="#section-table" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl font-medium transition">
+                <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl font-medium transition tab-btn">
+                    <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
+                </button>
+                <button onclick="switchView('history')" id="nav-history" class="w-full flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl font-medium transition tab-btn">
                     <i class="fa-solid fa-table w-5"></i> Data Laporan
-                </a>
+                </button>
+                <button onclick="switchView('users')" id="nav-users" class="w-full flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl font-medium transition tab-btn">
+                    <i class="fa-solid fa-users w-5"></i> Data Pengguna
+                </button>
             </nav>
             
             <div class="p-4 border-t border-gray-200 dark:border-gray-700">
@@ -90,7 +90,7 @@
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 overflow-y-auto relative h-full bg-gray-50/50 dark:bg-gray-900/50">
+        <main class="flex-1 overflow-y-auto relative h-full bg-gray-50/50 dark:bg-gray-900/50 pb-20 md:pb-0">
             <!-- Header Mobile -->
             <header class="md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center sticky top-0 z-30">
                 <div class="flex items-center gap-2">
@@ -104,137 +104,180 @@
                     <button id="btn-logout-mobile" class="text-red-500 text-xl"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
                 </div>
             </header>
+            
+            <!-- Mobile Bottom Nav -->
+            <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around p-2 z-40">
+                <button onclick="switchView('dashboard')" id="mobile-nav-dashboard" class="flex flex-col items-center p-2 text-emerald-600 dark:text-emerald-400 tab-btn-mobile">
+                    <i class="fa-solid fa-chart-pie text-xl mb-1"></i>
+                    <span class="text-[10px] font-bold">Dashboard</span>
+                </button>
+                <button onclick="switchView('history')" id="mobile-nav-history" class="flex flex-col items-center p-2 text-gray-500 dark:text-gray-400 tab-btn-mobile">
+                    <i class="fa-solid fa-table text-xl mb-1"></i>
+                    <span class="text-[10px] font-bold">Laporan</span>
+                </button>
+                <button onclick="switchView('users')" id="mobile-nav-users" class="flex flex-col items-center p-2 text-gray-500 dark:text-gray-400 tab-btn-mobile">
+                    <i class="fa-solid fa-users text-xl mb-1"></i>
+                    <span class="text-[10px] font-bold">Pengguna</span>
+                </button>
+            </nav>
 
             <div class="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
                 
-                <!-- FILTER BAR -->
-                <div class="glass-panel p-4 rounded-2xl shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between sticky top-0 md:top-4 z-20">
+                <!-- FILTER BAR (Global) -->
+                <div class="glass-panel p-4 rounded-2xl shadow-sm flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between sticky top-0 md:top-4 z-20">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Ringkasan Pemantauan</h2>
+                        <h2 id="page-title" class="text-xl font-bold text-gray-900 dark:text-white">Ringkasan Pemantauan</h2>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Dinas Pertanian Kab. Cianjur</p>
                     </div>
                     
-                    <div class="flex items-center gap-3 w-full md:w-auto">
-                        <select id="filter-month" class="flex-1 md:w-40 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                            <option value="">Semua Bulan</option>
-                            <option value="1">Januari</option>
-                            <option value="2">Februari</option>
-                            <option value="3">Maret</option>
-                            <option value="4">April</option>
-                            <option value="5">Mei</option>
-                            <option value="6">Juni</option>
-                            <option value="7">Juli</option>
-                            <option value="8">Agustus</option>
-                            <option value="9">September</option>
-                            <option value="10">Oktober</option>
-                            <option value="11">November</option>
-                            <option value="12">Desember</option>
-                        </select>
-                        <select id="filter-year" class="flex-1 md:w-32 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                            <option value="">Semua Tahun</option>
-                            <option value="2024">2024</option>
-                            <option value="2025">2025</option>
-                            <option value="2026" selected>2026</option>
-                        </select>
-                        <button id="btn-filter" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm">
-                            <i class="fa-solid fa-filter md:hidden"></i>
-                            <span class="hidden md:inline">Terapkan</span>
+                    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                        <div class="flex items-center gap-2 flex-1 min-w-[140px]">
+                            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Dari:</span>
+                            <input type="date" id="filter-start-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div class="flex items-center gap-2 flex-1 min-w-[140px]">
+                            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Sampai:</span>
+                            <input type="date" id="filter-end-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div class="flex items-center gap-2 flex-1 min-w-[140px]">
+                            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Kecamatan:</span>
+                            <select id="filter-location" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <option value="">Semua Lokasi</option>
+                                <!-- Akan diisi dinamis via JS -->
+                            </select>
+                        </div>
+                        
+                        <button id="btn-filter" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-filter"></i> Terapkan
                         </button>
                     </div>
                 </div>
 
-                <!-- CARDS -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="glass-panel p-6 rounded-2xl shadow-sm flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-500 text-xl">
-                            <i class="fa-solid fa-users"></i>
+                <!-- ================= VIEW: DASHBOARD ================= -->
+                <div id="view-dashboard" class="space-y-8 view-section">
+                    <!-- CARDS -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="glass-panel p-6 rounded-2xl shadow-sm flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-500 text-xl">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Pengguna</p>
+                                <h3 id="stat-users" class="text-2xl font-bold text-gray-900 dark:text-white">0</h3>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Pengguna</p>
-                            <h3 id="stat-users" class="text-2xl font-bold text-gray-900 dark:text-white">0</h3>
+                        <div class="glass-panel p-6 rounded-2xl shadow-sm flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-500 text-xl">
+                                <i class="fa-solid fa-camera"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Deteksi</p>
+                                <h3 id="stat-scans" class="text-2xl font-bold text-gray-900 dark:text-white">0</h3>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-6 rounded-2xl shadow-sm flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-500 text-xl">
+                                <i class="fa-solid fa-bug"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Penyakit Terbanyak</p>
+                                <h3 id="stat-top-disease" class="text-lg font-bold text-gray-900 dark:text-white truncate w-32">-</h3>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-6 rounded-2xl shadow-sm flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-500 text-xl">
+                                <i class="fa-solid fa-leaf"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Tanaman Terbanyak</p>
+                                <h3 id="stat-top-plant" class="text-lg font-bold text-gray-900 dark:text-white">-</h3>
+                            </div>
                         </div>
                     </div>
-                    <div class="glass-panel p-6 rounded-2xl shadow-sm flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-500 text-xl">
-                            <i class="fa-solid fa-camera"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Deteksi</p>
-                            <h3 id="stat-scans" class="text-2xl font-bold text-gray-900 dark:text-white">0</h3>
-                        </div>
-                    </div>
-                    <div class="glass-panel p-6 rounded-2xl shadow-sm flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-500 text-xl">
-                            <i class="fa-solid fa-bug"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Penyakit Terbanyak</p>
-                            <h3 id="stat-top-disease" class="text-lg font-bold text-gray-900 dark:text-white truncate w-32">-</h3>
-                        </div>
-                    </div>
-                    <div class="glass-panel p-6 rounded-2xl shadow-sm flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-500 text-xl">
-                            <i class="fa-solid fa-leaf"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Tanaman Terbanyak</p>
-                            <h3 id="stat-top-plant" class="text-lg font-bold text-gray-900 dark:text-white">-</h3>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- CHARTS -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- CHARTS -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Sebaran Penyakit</h3>
+                            <div class="h-64 relative w-full flex justify-center">
+                                <canvas id="diseaseChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Tren Deteksi Harian</h3>
+                            <div class="h-64 relative w-full">
+                                <canvas id="trendChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MAP -->
                     <div class="glass-panel p-6 rounded-2xl shadow-sm">
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Sebaran Penyakit</h3>
-                        <div class="h-64 relative w-full flex justify-center">
-                            <canvas id="diseaseChart"></canvas>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Peta Sebaran Kasus (Heatmap)</h3>
+                            <span class="text-xs bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded-md">Titik Merah = Sakit</span>
                         </div>
+                        <div id="map" class="shadow-inner"></div>
                     </div>
+                </div>
+
+                <!-- ================= VIEW: HISTORY ================= -->
+                <div id="view-history" class="view-section hidden">
                     <div class="glass-panel p-6 rounded-2xl shadow-sm">
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Tren Deteksi Bulanan</h3>
-                        <div class="h-64 relative w-full">
-                            <canvas id="trendChart"></canvas>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Data Laporan Mentah</h3>
+                            <button id="btn-export" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-md flex items-center gap-2">
+                                <i class="fa-solid fa-file-excel"></i> Export ke Excel
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                                <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                                    <tr>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Tanggal</th>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Pengguna</th>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Kecamatan</th>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Tanaman</th>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Diagnosis</th>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Akurasi</th>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+                                    <tr>
+                                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">Memuat data laporan...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- MAP -->
-                <div id="section-map" class="glass-panel p-6 rounded-2xl shadow-sm">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Peta Sebaran Kasus (Heatmap)</h3>
-                        <span class="text-xs bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded-md">Titik Merah = Sakit</span>
-                    </div>
-                    <div id="map" class="shadow-inner"></div>
-                </div>
-
-                <!-- TABLE -->
-                <div id="section-table" class="glass-panel p-6 rounded-2xl shadow-sm">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Data Laporan Mentah</h3>
-                        <button id="btn-export" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-md flex items-center gap-2">
-                            <i class="fa-solid fa-file-excel"></i> Export ke Excel
-                        </button>
-                    </div>
-                    
-                    <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-                        <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-                            <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                                <tr>
-                                    <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Tanggal</th>
-                                    <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Pengguna</th>
-                                    <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Lokasi (Kecamatan)</th>
-                                    <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Tanaman</th>
-                                    <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Diagnosis (Penyakit)</th>
-                                    <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Akurasi AI</th>
-                                </tr>
-                            </thead>
-                            <tbody id="table-body" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                <tr>
-                                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">Memuat data laporan...</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <!-- ================= VIEW: USERS ================= -->
+                <div id="view-users" class="view-section hidden">
+                    <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Daftar Pengguna Terdaftar</h3>
+                        </div>
+                        
+                        <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                                <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                                    <tr>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Nama</th>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Email</th>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Kecamatan (Terakhir)</th>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Tgl Daftar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-users-body" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+                                    <tr>
+                                        <td colspan="4" class="px-4 py-8 text-center text-gray-500">Memuat data pengguna...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 

@@ -161,6 +161,11 @@ function renderGoogleButtons() {
 async function handleCredentialResponse(response) {
     const googleToken = response.credential;
     
+    // Sembunyikan modal jika ada
+    if (typeof closeLoginModal === "function") {
+        closeLoginModal();
+    }
+    
     try {
         const res = await fetch(`${BACKEND_URL}/auth/google`, {
             method: "POST",
@@ -201,6 +206,11 @@ async function handleCredentialResponse(response) {
 function updateAuthUI() {
     if (authToken && userData) {
         if(googleLoginBtnArea) googleLoginBtnArea.classList.add("hidden");
+        const customLoginBtn = document.getElementById("custom-login-btn");
+        if(customLoginBtn) customLoginBtn.classList.add("hidden");
+        const customLoginBtnMobile = document.getElementById("custom-login-btn-mobile");
+        if(customLoginBtnMobile) customLoginBtnMobile.classList.add("hidden");
+        
         if(userProfile) userProfile.classList.remove("hidden");
         
         profilePic.src = userData.picture;
@@ -220,6 +230,11 @@ function updateAuthUI() {
         if(btnDownloadPdf) btnDownloadPdf.classList.remove("hidden");
     } else {
         if(googleLoginBtnArea) googleLoginBtnArea.classList.remove("hidden");
+        const customLoginBtn = document.getElementById("custom-login-btn");
+        if(customLoginBtn) customLoginBtn.classList.remove("hidden");
+        const customLoginBtnMobile = document.getElementById("custom-login-btn-mobile");
+        if(customLoginBtnMobile) customLoginBtnMobile.classList.remove("hidden");
+        
         if(userProfile) userProfile.classList.add("hidden");
         if(navHistory) navHistory.classList.add("hidden");
         if(mobileNavHistory) mobileNavHistory.classList.add("hidden");
@@ -246,7 +261,10 @@ if(btnLogout) {
         updateAuthUI();
         if(profileDropdown) profileDropdown.classList.add("hidden");
         showToast("Anda telah keluar.");
-        // Redirect jika di halaman riwayat
+        // Redirect jika di halaman riwayat atau jika ada overlay login
+        if (typeof closeLoginModal === "function") {
+            closeLoginModal();
+        }
         if(window.location.pathname.includes("riwayat.html")) {
             window.location.href = "index.html";
         }

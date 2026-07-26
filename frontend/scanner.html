@@ -88,10 +88,10 @@
             <button class="theme-toggle hidden md:flex w-10 h-10 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition shadow-sm border border-gray-300 dark:border-gray-700" title="Toggle Theme">
                 <i class="fa-solid fa-sun"></i>
             </button>
-            <!-- Tombol Login Google (Jika belum login) -->
-            <div id="google-login-btn" class="hidden">
-                <!-- GIS Button dirender di sini oleh JS -->
-            </div>
+            <!-- Area Tombol Login (Sebelum Login) -->
+            <button id="custom-login-btn" onclick="openLoginModal()" class="hidden md:block bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-full font-medium transition text-sm">
+                Masuk
+            </button>
 
             <!-- Profil User (Jika sudah login) -->
             <div id="user-profile"
@@ -139,6 +139,10 @@
         <a href="scanner.html" class="text-emerald-400 font-bold transition text-lg border-b border-gray-200 dark:border-gray-800 pb-3">Scanner AI</a>
 
         <a href="riwayat.html" id="mobile-nav-history" class="text-gray-600 dark:text-gray-300 hover:text-emerald-400 font-medium transition text-lg border-b border-gray-200 dark:border-gray-800 pb-3 hidden">Riwayat</a>
+            
+        <button id="custom-login-btn-mobile" onclick="openLoginModal()" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-3 rounded-xl font-medium transition flex items-center justify-center gap-2">
+            Masuk / Daftar
+        </button>
     </div>
 
     <!-- Konten Utama -->
@@ -304,6 +308,25 @@
             <p class="text-xs text-gray-600">&copy; 2026 <span class="text-emerald-500 font-bold tracking-widest">RivalRam</span>. Seluruh Hak Cipta Dilindungi.</p>
         </div>
     </footer>
+
+    <!-- LOGIN MODAL (GLOABL NAVBAR) -->
+    <div id="login-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-sm w-full shadow-2xl relative">
+            <button onclick="closeLoginModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-500 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="text-center mb-6">
+                <img src="logo.png" class="w-16 h-16 mx-auto mb-4 rounded-xl border border-emerald-500 shadow-sm" alt="Logo">
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Selamat Datang</h3>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">Masuk untuk menyimpan riwayat deteksi Anda.</p>
+            </div>
+            <div id="google-login-modal-btn" class="flex justify-center w-full"></div>
+        </div>
+    </div>
+    <script>
+        function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
+        function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
+    </script>
 
     <!-- MODAL RIWAYAT TELAH DIPINDAHKAN KE riwayat.html -->
 

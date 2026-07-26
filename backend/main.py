@@ -365,6 +365,120 @@ async def predict(
             detail="Mohon maaf, layanan deteksi AI saat ini sedang sibuk atau kehabisan kuota harian. Silakan coba lagi nanti."
     )
 
+    # 3. Proses Analisis dengan Gemini Vision AI
+    if not HAS_GENAI or len(API_KEY_POOL) == 0:
+        # MODE SIMULASI JIKA TIDAK ADA API KEY
+        mock_data = random.choice(SIMULATION_RESPONSES)
+        result_data = {
+            "status": "success",
+            "plant": mock_data["plant"],
+            "class_name": mock_data["class_name"],
+            "confidence": mock_data["confidence"],
+            "recommendation": mock_data["recommendation"],
+            "image_filename": image_filename,
+            "is_mock": True
+        }
+        
+        # Simpan ke Database Riwayat
+        if current_user:
+            new_history = models.History(
+                user_id=current_user.id,
+                plant_name=result_data["plant"],
+                disease_class=result_data["class_name"],
+                confidence=result_data["confidence"],
+                recommendation=result_data["recommendation"],
+                image_filename=result_data["image_filename"],
+                location=location,
+                lat=lat,
+                lng=lng
+            )
+            db.add(new_history)
+            db.commit()
+            
+        return result_data
+
+    # ATUR TEMPERATURE KE 0.0 AGAR HASILNYA 100% KONSISTEN
+    generation_config = genai.types.GenerationConfig(
+        temperature=0.0,
+        top_p=1.0,
+        top_k=32
+    )
+
+    # [FITUR AUTO-RETRY POOLING]
+    last_error_msg = ""
+    for attempt in range(len(API_KEY_POOL)):
+        active_api_key = next(api_key_cycle)
+        try:
+            genai.configure(api_key=active_api_key)
+            chosen_model_name = get_best_vision_model()
+            model = genai.GenerativeModel(chosen_model_name)
+            
+            response = model.generate_content([SYSTEM_PROMPT, image], generation_config=generation_config)
+            
+            # Parsing respons teks menjadi JSON
+            res_text = response.text.strip()
+            if res_text.startswith("```json"):
+                res_text = res_text[7:]
+            elif res_text.startswith("```"):
+                res_text = res_text[3:]
+            if res_text.endswith("```"):
+                res_text = res_text[:-3]
+            res_text = res_text.strip()
+            
+            try:
+                ai_data = json.loads(res_text)
+            except json.JSONDecodeError:
+                # Jika respons AI bukan JSON, tangani dengan anggun
+                ai_data = {
+                    "plant": "Tanaman Rempah",
+                    "class_name": "Diagnosis Selesai",
+                    "confidence": 0.92,
+                    "recommendation": response.text
+                }
+            
+            result_data = {
+                "status": "success",
+                "plant": ai_data.get("plant", "Tanaman Rempah"),
+                "class_name": ai_data.get("class_name", "Hasil Diagnosis"),
+                "confidence": float(ai_data.get("confidence", 0.95)),
+                "recommendation": ai_data.get("recommendation", "Tidak ada detail rekomendasi."),
+                "image_filename": image_filename,
+                "is_mock": False
+            }
+
+            # Simpan ke Database Riwayat & Ingatan Piksel
+            if current_user:
+                new_history = models.History(
+                    user_id=current_user.id,
+                    plant_name=result_data["plant"],
+                    disease_class=result_data["class_name"],
+                    confidence=result_data["confidence"],
+                    recommendation=result_data["recommendation"],
+                    image_filename=result_data["image_filename"],
+                    location=location,
+                    lat=lat,
+                    lng=lng
+                )
+                db.add(new_history)
+                db.commit()
+
+            predict_cache[image_hash] = result_data
+            return result_data
+
+        except Exception as e:
+            err_msg = str(e).lower()
+            last_error_msg = str(e)
+            print(f"[WARNING] API Key ke-{attempt+1} gagal memproses gambar. Mencoba kunci berikutnya secara diam-diam. Error: {last_error_msg}")
+            # Lanjutkan ke kunci API berikutnya tanpa mempedulikan jenis errornya (Quota limit, Model 404, Network error, dll).
+            continue
+            
+    # Jika loop selesai tapi tidak ada yang return, berarti SEMUA key di pool gagal/habis kuota
+    raise HTTPException(
+        status_code=429,
+        detail="Sistem sedang mengalami kepadatan akses. Seluruh API Key di server telah mencapai batas. Mohon tunggu beberapa saat atau tambahkan API Key baru."
+    )
+
+
 from sqlalchemy import extract, func
 
 @app.get("/admin/stats")
@@ -480,118 +594,6 @@ async def get_admin_history(
         "data": result
     }
 
-    # 3. Proses Analisis dengan Gemini Vision AI
-    if not HAS_GENAI or len(API_KEY_POOL) == 0:
-        # MODE SIMULASI JIKA TIDAK ADA API KEY
-        mock_data = random.choice(SIMULATION_RESPONSES)
-        result_data = {
-            "status": "success",
-            "plant": mock_data["plant"],
-            "class_name": mock_data["class_name"],
-            "confidence": mock_data["confidence"],
-            "recommendation": mock_data["recommendation"],
-            "image_filename": image_filename,
-            "is_mock": True
-        }
-        
-        # Simpan ke Database Riwayat
-        if current_user:
-            new_history = models.History(
-                user_id=current_user.id,
-                plant_name=result_data["plant"],
-                disease_class=result_data["class_name"],
-                confidence=result_data["confidence"],
-                recommendation=result_data["recommendation"],
-                image_filename=result_data["image_filename"],
-                location=location,
-                lat=lat,
-                lng=lng
-            )
-            db.add(new_history)
-            db.commit()
-            
-        return result_data
-
-    # ATUR TEMPERATURE KE 0.0 AGAR HASILNYA 100% KONSISTEN
-    generation_config = genai.types.GenerationConfig(
-        temperature=0.0,
-        top_p=1.0,
-        top_k=32
-    )
-
-    # [FITUR AUTO-RETRY POOLING]
-    last_error_msg = ""
-    for attempt in range(len(API_KEY_POOL)):
-        active_api_key = next(api_key_cycle)
-        try:
-            genai.configure(api_key=active_api_key)
-            chosen_model_name = get_best_vision_model()
-            model = genai.GenerativeModel(chosen_model_name)
-            
-            response = model.generate_content([SYSTEM_PROMPT, image], generation_config=generation_config)
-            
-            # Parsing respons teks menjadi JSON
-            res_text = response.text.strip()
-            if res_text.startswith("```json"):
-                res_text = res_text[7:]
-            elif res_text.startswith("```"):
-                res_text = res_text[3:]
-            if res_text.endswith("```"):
-                res_text = res_text[:-3]
-            res_text = res_text.strip()
-            
-            try:
-                ai_data = json.loads(res_text)
-            except json.JSONDecodeError:
-                # Jika respons AI bukan JSON, tangani dengan anggun
-                ai_data = {
-                    "plant": "Tanaman Rempah",
-                    "class_name": "Diagnosis Selesai",
-                    "confidence": 0.92,
-                    "recommendation": response.text
-                }
-            
-            result_data = {
-                "status": "success",
-                "plant": ai_data.get("plant", "Tanaman Rempah"),
-                "class_name": ai_data.get("class_name", "Hasil Diagnosis"),
-                "confidence": float(ai_data.get("confidence", 0.95)),
-                "recommendation": ai_data.get("recommendation", "Tidak ada detail rekomendasi."),
-                "image_filename": image_filename,
-                "is_mock": False
-            }
-
-            # Simpan ke Database Riwayat & Ingatan Piksel
-            if current_user:
-                new_history = models.History(
-                    user_id=current_user.id,
-                    plant_name=result_data["plant"],
-                    disease_class=result_data["class_name"],
-                    confidence=result_data["confidence"],
-                    recommendation=result_data["recommendation"],
-                    image_filename=result_data["image_filename"],
-                    location=location,
-                    lat=lat,
-                    lng=lng
-                )
-                db.add(new_history)
-                db.commit()
-
-            predict_cache[image_hash] = result_data
-            return result_data
-
-        except Exception as e:
-            err_msg = str(e).lower()
-            last_error_msg = str(e)
-            print(f"[WARNING] API Key ke-{attempt+1} gagal memproses gambar. Mencoba kunci berikutnya secara diam-diam. Error: {last_error_msg}")
-            # Lanjutkan ke kunci API berikutnya tanpa mempedulikan jenis errornya (Quota limit, Model 404, Network error, dll).
-            continue
-            
-    # Jika loop selesai tapi tidak ada yang return, berarti SEMUA key di pool gagal/habis kuota
-    raise HTTPException(
-        status_code=429,
-        detail="Sistem sedang mengalami kepadatan akses. Seluruh API Key di server telah mencapai batas. Mohon tunggu beberapa saat atau tambahkan API Key baru."
-    )
 
 if __name__ == "__main__":
     import uvicorn

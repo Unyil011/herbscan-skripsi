@@ -11,6 +11,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     name = Column(String)
     picture = Column(String, nullable=True)
+    role = Column(String, default="user")  # 'user' atau 'admin'
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relasi ke history
@@ -25,6 +26,12 @@ class History(Base):
     disease_class = Column(String)
     confidence = Column(Float)
     recommendation = Column(String)
+    
+    # Data Geolocation (Untuk Dasbor Admin)
+    location = Column(String, default="Tidak Diketahui") # Nama Kecamatan
+    lat = Column(Float, nullable=True) # Latitude
+    lng = Column(Float, nullable=True) # Longitude
+    
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # (Opsional) jika kita ingin menyimpan nama file gambar

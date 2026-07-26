@@ -745,6 +745,48 @@ btnCapturePhoto?.addEventListener("click", () => {
 // 4. LOGIKA DETEKSI / CALL BACKEND API
 // ============================================================================
 
+// Fungsi untuk mendapatkan lokasi dan nama kecamatan
+async function getLocation() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            resolve({ location: "Tidak Diketahui", lat: null, lng: null });
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            try {
+                // Reverse geocoding via Nominatim
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`, {
+                    headers: {
+                        'Accept-Language': 'id'
+                    }
+                });
+                const data = await res.json();
+                
+                let kec = "Tidak Diketahui";
+                if (data && data.address) {
+                    // Cari kecamatan dari properti yang dikembalikan
+                    kec = data.address.suburb || data.address.village || data.address.town || data.address.city_district || data.address.county || "Tidak Diketahui";
+                    
+                    // Rapikan nama kecamatan
+                    if (kec !== "Tidak Diketahui" && !kec.toLowerCase().includes("kecamatan")) {
+                        kec = "Kecamatan " + kec;
+                    }
+                }
+                resolve({ location: kec, lat: lat, lng: lng });
+            } catch (e) {
+                resolve({ location: "Tidak Diketahui", lat: lat, lng: lng });
+            }
+        }, (error) => {
+            console.log("Akses lokasi ditolak atau gagal:", error);
+            resolve({ location: "Tidak Diketahui", lat: null, lng: null });
+        }, { timeout: 10000 });
+    });
+}
+
 detectBtn?.addEventListener("click", async () => {
     if (!currentFile) return;
 
@@ -753,10 +795,18 @@ detectBtn?.addEventListener("click", async () => {
     resultContent.classList.add("hidden");
     resultLoading.classList.remove("hidden");
     detectBtn.disabled = true;
-    detectBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Proses sedang berjalan harap tunggu...';
+    detectBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Mendapatkan Lokasi...';
+
+    // Ambil lokasi (jika ditolak, otomatis "Tidak Diketahui")
+    const locData = await getLocation();
+
+    detectBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Proses AI sedang berjalan...';
 
     const formData = new FormData();
     formData.append("file", currentFile);
+    if(locData.location) formData.append("location", locData.location);
+    if(locData.lat) formData.append("lat", locData.lat);
+    if(locData.lng) formData.append("lng", locData.lng);
 
     try {
         const headers = {};

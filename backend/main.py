@@ -206,6 +206,11 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     except jwt.PyJWTError:
         return None
 
+def get_admin_user(current_user: models.User = Depends(get_current_user)):
+    if not current_user or current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Akses ditolak. Anda bukan admin.")
+    return current_user
+
 @app.post("/auth/google")
 async def auth_google(request_data: dict, db: Session = Depends(get_db)):
     token = request_data.get("credential")
@@ -302,6 +307,9 @@ async def delete_history_bulk(req: DeleteBulkRequest, current_user: models.User 
 @app.post("/predict")
 async def predict(
     file: UploadFile = File(...),
+    location: str = Form("Tidak Diketahui"),
+    lat: float = Form(None),
+    lng: float = Form(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -334,7 +342,10 @@ async def predict(
                     disease_class=cached_data["class_name"],
                     confidence=cached_data["confidence"],
                     recommendation=cached_data["recommendation"],
-                    image_filename=cached_data.get("image_filename")
+                    image_filename=cached_data.get("image_filename"),
+                    location=location,
+                    lat=lat,
+                    lng=lng
                 )
                 db.add(new_history)
                 db.commit()
@@ -351,8 +362,123 @@ async def predict(
         print("Error processing image:", e)
         raise HTTPException(
             status_code=400,
-            detail="Berkas gambar rusak atau tidak dapat dibaca oleh sistem."
-        )
+            detail="Mohon maaf, layanan deteksi AI saat ini sedang sibuk atau kehabisan kuota harian. Silakan coba lagi nanti."
+    )
+
+from sqlalchemy import extract, func
+
+@app.get("/admin/stats")
+async def get_admin_stats(
+    month: int = None,
+    year: int = None,
+    admin_user: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(models.History)
+    if month:
+        query = query.filter(extract('month', models.History.created_at) == month)
+    if year:
+        query = query.filter(extract('year', models.History.created_at) == year)
+        
+    total_scans = query.count()
+    
+    # Total Users registered
+    total_users = db.query(models.User).count()
+    
+    # Penyakit terbanyak
+    disease_counts = db.query(
+        models.History.disease_class, 
+        func.count(models.History.id).label('count')
+    )
+    if month: disease_counts = disease_counts.filter(extract('month', models.History.created_at) == month)
+    if year: disease_counts = disease_counts.filter(extract('year', models.History.created_at) == year)
+    disease_counts = disease_counts.group_by(models.History.disease_class).order_by(func.count(models.History.id).desc()).all()
+    
+    # Tanaman terbanyak
+    plant_counts = db.query(
+        models.History.plant_name, 
+        func.count(models.History.id).label('count')
+    )
+    if month: plant_counts = plant_counts.filter(extract('month', models.History.created_at) == month)
+    if year: plant_counts = plant_counts.filter(extract('year', models.History.created_at) == year)
+    plant_counts = plant_counts.group_by(models.History.plant_name).order_by(func.count(models.History.id).desc()).all()
+    
+    # Lokasi rawan (Kecamatan)
+    location_counts = db.query(
+        models.History.location, 
+        func.count(models.History.id).label('count')
+    )
+    if month: location_counts = location_counts.filter(extract('month', models.History.created_at) == month)
+    if year: location_counts = location_counts.filter(extract('year', models.History.created_at) == year)
+    location_counts = location_counts.group_by(models.History.location).order_by(func.count(models.History.id).desc()).all()
+
+    # Tren per bulan (Jika filter tahun aktif)
+    monthly_trends = []
+    if year:
+        trend_query = db.query(
+            extract('month', models.History.created_at).label('month'),
+            func.count(models.History.id).label('count')
+        ).filter(extract('year', models.History.created_at) == year).group_by('month').order_by('month').all()
+        monthly_trends = [{"month": int(row.month), "count": row.count} for row in trend_query]
+
+    # Data Map Points (Lat/Lng)
+    map_points = query.filter(models.History.lat.isnot(None), models.History.lng.isnot(None)).with_entities(
+        models.History.lat, models.History.lng, models.History.disease_class
+    ).all()
+
+    return {
+        "status": "success",
+        "data": {
+            "total_users": total_users,
+            "total_scans": total_scans,
+            "diseases": [{"name": r[0], "count": r[1]} for r in disease_counts],
+            "plants": [{"name": r[0], "count": r[1]} for r in plant_counts],
+            "locations": [{"name": r[0], "count": r[1]} for r in location_counts],
+            "monthly_trends": monthly_trends,
+            "map_points": [{"lat": r[0], "lng": r[1], "disease": r[2]} for r in map_points]
+        }
+    }
+
+@app.get("/admin/history")
+async def get_admin_history(
+    month: int = None,
+    year: int = None,
+    admin_user: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(
+        models.History.id,
+        models.History.created_at,
+        models.User.name.label('user_name'),
+        models.History.location,
+        models.History.plant_name,
+        models.History.disease_class,
+        models.History.confidence
+    ).join(models.User, models.History.user_id == models.User.id)
+    
+    if month:
+        query = query.filter(extract('month', models.History.created_at) == month)
+    if year:
+        query = query.filter(extract('year', models.History.created_at) == year)
+        
+    histories = query.order_by(models.History.created_at.desc()).all()
+    
+    result = []
+    for h in histories:
+        result.append({
+            "id": h.id,
+            "date": h.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "user": h.user_name,
+            "location": h.location,
+            "plant": h.plant_name,
+            "disease": h.disease_class,
+            "confidence": f"{h.confidence:.1f}%" if h.confidence else "N/A"
+        })
+        
+    return {
+        "status": "success",
+        "data": result
+    }
 
     # 3. Proses Analisis dengan Gemini Vision AI
     if not HAS_GENAI or len(API_KEY_POOL) == 0:
@@ -376,7 +502,10 @@ async def predict(
                 disease_class=result_data["class_name"],
                 confidence=result_data["confidence"],
                 recommendation=result_data["recommendation"],
-                image_filename=result_data["image_filename"]
+                image_filename=result_data["image_filename"],
+                location=location,
+                lat=lat,
+                lng=lng
             )
             db.add(new_history)
             db.commit()
@@ -440,7 +569,10 @@ async def predict(
                     disease_class=result_data["class_name"],
                     confidence=result_data["confidence"],
                     recommendation=result_data["recommendation"],
-                    image_filename=result_data["image_filename"]
+                    image_filename=result_data["image_filename"],
+                    location=location,
+                    lat=lat,
+                    lng=lng
                 )
                 db.add(new_history)
                 db.commit()

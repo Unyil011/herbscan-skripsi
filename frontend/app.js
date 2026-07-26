@@ -354,7 +354,7 @@ function renderHistoryList(histories) {
     historyListContainer.innerHTML = histories.map(h => {
         const date = new Date(h.created_at).toLocaleString('id-ID');
         const acc = (h.confidence * 100).toFixed(1);
-        const imgUrl = h.image_filename ? `${BACKEND_URL}/uploads/${h.image_filename}` : '';
+        const imgUrl = h.image_filename ? (h.image_filename.startsWith('data:image') ? h.image_filename : `${BACKEND_URL}/uploads/${h.image_filename}`) : '';
         return `
             <div class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition flex flex-col relative group history-item" data-id="${h.id}">
                 <div class="absolute top-4 right-4 z-10 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">

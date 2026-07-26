@@ -353,10 +353,10 @@ async def predict(
 
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         
-        # Simpan gambar fisik ke folder uploads
-        image_filename = f"{uuid.uuid4().hex}.jpg"
-        upload_path = os.path.join(UPLOAD_DIR, image_filename)
-        image.save(upload_path, format="JPEG", quality=85)
+        # Ubah gambar ke format Base64 agar tersimpan permanen di Database (Solusi Vercel Serverless)
+        import base64
+        base64_encoded = base64.b64encode(contents).decode('utf-8')
+        image_filename = f"data:image/{file_ext};base64,{base64_encoded}"
         
     except Exception as e:
         print("Error processing image:", e)

@@ -14,27 +14,24 @@ const statTopDisease = document.getElementById("stat-top-disease");
 const statTopPlant = document.getElementById("stat-top-plant");
 const tableBody = document.getElementById("table-body");
 
-const filterStartDate = document.getElementById("filter-start-date");
-const filterEndDate = document.getElementById("filter-end-date");
+const filterDate = document.getElementById("filter-date");
 const filterLocation = document.getElementById("filter-location");
 const btnFilter = document.getElementById("btn-filter");
 const btnExport = document.getElementById("btn-export");
+const btnBulkDelete = document.getElementById("btn-bulk-delete");
+const checkAll = document.getElementById("check-all");
 const pageTitle = document.getElementById("page-title");
 const tableUsersBody = document.getElementById("table-users-body");
 
 // Chart Instances & Map
 let diseaseChartInstance = null;
+let plantChartInstance = null;
 let trendChartInstance = null;
 let leafletMap = null;
 let rawHistoryData = [];
 
-// Set Default Tanggal ke Bulan Ini
-const today = new Date();
-const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-if(filterStartDate && filterEndDate) {
-    filterStartDate.value = firstDay.toISOString().split('T')[0];
-    filterEndDate.value = today.toISOString().split('T')[0];
-}
+// Array untuk menyimpan ID laporan yang dicentang
+let selectedHistoryIds = [];
 
 // ==========================================
 // 0. NAVIGASI TAB
@@ -172,9 +169,31 @@ btnLogoutMobile?.addEventListener("click", doLogout);
 // 3. LOAD DATA DASHBOARD
 // ==========================================
 async function loadDashboardData() {
-    const start = filterStartDate.value;
-    const end = filterEndDate.value;
+    let start = "";
+    let end = "";
+    const dateVal = filterDate ? filterDate.value : "this_month";
     const loc = filterLocation.value;
+    
+    const now = new Date();
+    
+    if (dateVal === "today") {
+        start = now.toISOString().split('T')[0];
+        end = now.toISOString().split('T')[0];
+    } else if (dateVal === "7days") {
+        const d = new Date();
+        d.setDate(d.getDate() - 7);
+        start = d.toISOString().split('T')[0];
+        end = now.toISOString().split('T')[0];
+    } else if (dateVal === "30days") {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        start = d.toISOString().split('T')[0];
+        end = now.toISOString().split('T')[0];
+    } else if (dateVal === "this_month") {
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        start = firstDay.toISOString().split('T')[0];
+        end = now.toISOString().split('T')[0];
+    }
     
     let query = "?";
     if (start) query += `start_date=${start}&`;
@@ -296,6 +315,32 @@ function renderCharts(data) {
         }
     });
 
+    // Pie Chart Tanaman
+    const ctxPlant = document.getElementById('plantChart').getContext('2d');
+    if (plantChartInstance) plantChartInstance.destroy();
+    
+    const plantLabels = data.plants.map(p => p.name);
+    const plantValues = data.plants.map(p => p.count);
+    
+    plantChartInstance = new Chart(ctxPlant, {
+        type: 'doughnut',
+        data: {
+            labels: plantLabels,
+            datasets: [{
+                data: plantValues,
+                backgroundColor: ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { color: '#9CA3AF' } }
+            }
+        }
+    });
+
     // Line Chart Trend (Harian)
     const ctxTrend = document.getElementById('trendChart').getContext('2d');
     if (trendChartInstance) trendChartInstance.destroy();
@@ -376,8 +421,12 @@ function renderMap(points) {
 
 function renderTable(historyList) {
     tableBody.innerHTML = "";
+    selectedHistoryIds = [];
+    updateBulkDeleteButton();
+    if(checkAll) checkAll.checked = false;
+
     if (historyList.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">Tidak ada data pada periode ini.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">Tidak ada data pada periode ini.</td></tr>`;
         return;
     }
     
@@ -387,6 +436,9 @@ function renderTable(historyList) {
         
         const tr = document.createElement("tr");
         tr.innerHTML = `
+            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                <input type="checkbox" class="history-checkbox rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 bg-white dark:bg-gray-700 dark:border-gray-600 cursor-pointer" value="${h.id}">
+            </td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${h.date.split(" ")[0]}</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 font-medium text-gray-900 dark:text-gray-100">${h.user}</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${h.location}</td>
@@ -401,6 +453,42 @@ function renderTable(historyList) {
         `;
         tableBody.appendChild(tr);
     });
+
+    // Tambahkan event listener untuk checkbox individu
+    document.querySelectorAll('.history-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            const id = parseInt(e.target.value);
+            if(e.target.checked) {
+                selectedHistoryIds.push(id);
+            } else {
+                selectedHistoryIds = selectedHistoryIds.filter(item => item !== id);
+                if(checkAll) checkAll.checked = false; // Uncheck 'check all' jika ada 1 yang di-uncheck
+            }
+            updateBulkDeleteButton();
+        });
+    });
+}
+
+// Fitur Check All
+if(checkAll) {
+    checkAll.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        selectedHistoryIds = [];
+        document.querySelectorAll('.history-checkbox').forEach(cb => {
+            cb.checked = isChecked;
+            if(isChecked) selectedHistoryIds.push(parseInt(cb.value));
+        });
+        updateBulkDeleteButton();
+    });
+}
+
+function updateBulkDeleteButton() {
+    if(selectedHistoryIds.length > 0) {
+        btnBulkDelete.classList.remove('hidden');
+        btnBulkDelete.innerHTML = `<i class="fa-solid fa-trash-can"></i> Hapus Terpilih (${selectedHistoryIds.length})`;
+    } else {
+        btnBulkDelete.classList.add('hidden');
+    }
 }
 
 function renderUsers(usersList) {
@@ -433,7 +521,6 @@ window.deleteHistory = async function(id) {
         const data = await res.json();
         
         if (res.ok && data.status === "success") {
-            alert("Laporan berhasil dihapus!");
             loadDashboardData(); // Refresh ulang datanya
         } else {
             alert(data.detail || "Gagal menghapus laporan.");
@@ -443,6 +530,35 @@ window.deleteHistory = async function(id) {
         alert("Terjadi kesalahan pada server saat menghapus laporan.");
     }
 };
+
+if(btnBulkDelete) {
+    btnBulkDelete.addEventListener("click", async () => {
+        if(selectedHistoryIds.length === 0) return;
+        if(!confirm(`Yakin ingin menghapus ${selectedHistoryIds.length} laporan terpilih secara permanen?`)) return;
+
+        try {
+            const res = await fetch(`${BACKEND_URL}/admin/history/bulk`, {
+                method: "DELETE",
+                headers: { 
+                    "Authorization": `Bearer ${authToken}`,
+                    "Content-Type": "application/json" 
+                },
+                body: JSON.stringify({ ids: selectedHistoryIds })
+            });
+            
+            const data = await res.json();
+            
+            if (res.ok && data.status === "success") {
+                loadDashboardData(); // Refresh ulang datanya
+            } else {
+                alert(data.detail || "Gagal menghapus laporan massal.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Terjadi kesalahan pada server saat menghapus laporan.");
+        }
+    });
+}
 
 // ==========================================
 // 5. EXPORT KE EXCEL

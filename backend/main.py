@@ -3,6 +3,8 @@ import json
 import random
 import time
 import itertools
+from typing import List
+from pydantic import BaseModel
 from fastapi import FastAPI, File, UploadFile, HTTPException, Header, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -632,6 +634,23 @@ async def delete_admin_history(
     db.delete(history_obj)
     db.commit()
     return {"status": "success", "message": "Riwayat berhasil dihapus"}
+
+class BulkDeleteRequest(BaseModel):
+    ids: List[int]
+
+@app.delete("/admin/history/bulk")
+async def delete_admin_history_bulk(
+    request: BulkDeleteRequest,
+    admin_user: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        db.query(models.History).filter(models.History.id.in_(request.ids)).delete(synchronize_session=False)
+        db.commit()
+        return {"status": "success", "message": f"{len(request.ids)} laporan berhasil dihapus"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/admin/users")
 async def get_admin_users(

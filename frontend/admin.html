@@ -132,12 +132,14 @@
                     
                     <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
                         <div class="flex items-center gap-2 flex-1 min-w-[140px]">
-                            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Dari:</span>
-                            <input type="date" id="filter-start-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                        </div>
-                        <div class="flex items-center gap-2 flex-1 min-w-[140px]">
-                            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Sampai:</span>
-                            <input type="date" id="filter-end-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Periode:</span>
+                            <select id="filter-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <option value="all">Semua Waktu</option>
+                                <option value="today">Hari Ini</option>
+                                <option value="7days">7 Hari Terakhir</option>
+                                <option value="30days">30 Hari Terakhir</option>
+                                <option value="this_month" selected>Bulan Ini</option>
+                            </select>
                         </div>
                         <div class="flex items-center gap-2 flex-1 min-w-[140px]">
                             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Kecamatan:</span>
@@ -211,13 +213,21 @@
                         </div>
                     </div>
 
-                    <!-- MAP -->
-                    <div class="glass-panel p-6 rounded-2xl shadow-sm">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Peta Sebaran Kasus (Heatmap)</h3>
-                            <span class="text-xs bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded-md">Titik Merah = Sakit</span>
+                    <!-- MAP & PLANT CHART -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Paling Banyak Di-Scan</h3>
+                            <div class="h-64 relative w-full flex justify-center">
+                                <canvas id="plantChart"></canvas>
+                            </div>
                         </div>
-                        <div id="map" class="shadow-inner"></div>
+                        <div class="glass-panel p-6 rounded-2xl shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Peta Sebaran (Heatmap)</h3>
+                                <span class="text-xs bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded-md">Titik Merah = Sakit</span>
+                            </div>
+                            <div id="map" class="shadow-inner" style="height: 256px;"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -226,15 +236,23 @@
                     <div class="glass-panel p-6 rounded-2xl shadow-sm">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white">Data Laporan Mentah</h3>
-                            <button id="btn-export" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-md flex items-center gap-2">
-                                <i class="fa-solid fa-file-excel"></i> Export ke Excel
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <button id="btn-bulk-delete" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-md flex items-center gap-2 hidden">
+                                    <i class="fa-solid fa-trash-can"></i> Hapus Terpilih
+                                </button>
+                                <button id="btn-export" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-md flex items-center gap-2">
+                                    <i class="fa-solid fa-file-excel"></i> Export ke Excel
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                             <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
                                 <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
                                     <tr>
+                                        <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                                            <input type="checkbox" id="check-all" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 bg-white dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
+                                        </th>
                                         <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Tanggal</th>
                                         <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Pengguna</th>
                                         <th class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-semibold">Kecamatan</th>
@@ -246,7 +264,7 @@
                                 </thead>
                                 <tbody id="table-body" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                     <tr>
-                                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">Memuat data laporan...</td>
+                                        <td colspan="8" class="px-4 py-8 text-center text-gray-500">Memuat data laporan...</td>
                                     </tr>
                                 </tbody>
                             </table>

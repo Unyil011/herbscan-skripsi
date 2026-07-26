@@ -98,7 +98,7 @@
                 class="hidden flex items-center gap-3 bg-glass-light border border-glass-border px-4 py-2 rounded-full cursor-pointer hover:bg-white/20 transition duration-300 relative">
                 <img id="profile-pic" src="" alt="Profile"
                     class="w-8 h-8 rounded-full border-2 border-emerald-400 shadow-sm">
-                <span id="profile-name" class="font-medium text-sm text-gray-800 dark:text-gray-100"></span>
+                <span id="profile-name" class="font-medium text-sm text-gray-800 dark:text-gray-100 hidden md:block"></span>
                 <i class="fa-solid fa-chevron-down text-xs text-gray-600 dark:text-gray-300"></i>
 
                 <!-- Dropdown Menu -->
@@ -121,6 +121,12 @@
     <!-- Mobile Navigation Menu -->
     <div id="mobile-menu" class="fixed inset-y-0 right-0 z-40 w-64 bg-gray-50 dark:bg-gray-900/95 backdrop-blur-md border-l border-gray-300 dark:border-gray-700 shadow-2xl transform translate-x-full transition-transform duration-300 md:hidden flex flex-col pt-24 px-6 gap-6">
         
+        <!-- Profil Info (Mobile) -->
+        <div id="mobile-profile-info" class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-4 mb-2 hidden">
+            <span class="text-gray-500 dark:text-gray-400 text-sm">Halo,</span>
+            <span id="mobile-profile-name" class="font-bold text-gray-900 dark:text-white text-lg"></span>
+        </div>
+
         <!-- Mobile Theme Toggle -->
         <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-3">
             <span class="text-gray-600 dark:text-gray-300 font-medium text-lg">Tema</span>
@@ -374,7 +380,7 @@
 
     <!-- Script HTML2PDF untuk Ekspor PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="app.js?v=12"></script>
+    <script src="app.js?v=13"></script>
 </body>
 
 </html>

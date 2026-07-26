@@ -205,8 +205,17 @@ function updateAuthUI() {
         
         profilePic.src = userData.picture;
         profileName.textContent = userData.name;
+        
+        // Update nama di mobile menu jika ada
+        const mobileProfileName = document.getElementById("mobile-profile-name");
+        if(mobileProfileName) mobileProfileName.textContent = userData.name;
+        
         if(navHistory) navHistory.classList.remove("hidden");
         if(mobileNavHistory) mobileNavHistory.classList.remove("hidden");
+        
+        const mobileProfileInfo = document.getElementById("mobile-profile-info");
+        if(mobileProfileInfo) mobileProfileInfo.classList.remove("hidden");
+        
         if(loginPromptArea) loginPromptArea.classList.add("hidden");
         if(btnDownloadPdf) btnDownloadPdf.classList.remove("hidden");
     } else {
@@ -214,6 +223,10 @@ function updateAuthUI() {
         if(userProfile) userProfile.classList.add("hidden");
         if(navHistory) navHistory.classList.add("hidden");
         if(mobileNavHistory) mobileNavHistory.classList.add("hidden");
+        
+        const mobileProfileInfo = document.getElementById("mobile-profile-info");
+        if(mobileProfileInfo) mobileProfileInfo.classList.add("hidden");
+        
         if(btnDownloadPdf) btnDownloadPdf.classList.add("hidden");
         
         renderGoogleButtons();
@@ -223,6 +236,9 @@ function updateAuthUI() {
 // Fungsi Keluar (Logout)
 if(btnLogout) {
     btnLogout.addEventListener("click", () => {
+        // Beri tahu Google bahwa user telah keluar (mencegah auto-login / One Tap nyangkut)
+        google.accounts.id.disableAutoSelect();
+        
         localStorage.removeItem("herbscan_token");
         localStorage.removeItem("herbscan_user");
         authToken = null;

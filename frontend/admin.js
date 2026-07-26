@@ -302,6 +302,15 @@ async function loadDashboardData() {
 
 btnFilter.addEventListener("click", loadDashboardData);
 
+// Helper memotong kata "Kecamatan" dari nama lokasi
+function formatLocationName(name) {
+    if(!name) return "";
+    if(name.toLowerCase().startsWith("kecamatan ")) {
+        return name.substring(10);
+    }
+    return name;
+}
+
 // Memasukkan list kecamatan ke opsi filter secara dinamis
 function populateLocationFilter(locations) {
     const currentVal = filterLocation.value;
@@ -310,7 +319,7 @@ function populateLocationFilter(locations) {
         if(l.name) {
             const opt = document.createElement("option");
             opt.value = l.name;
-            opt.textContent = l.name;
+            opt.textContent = formatLocationName(l.name);
             if(l.name === currentVal) opt.selected = true;
             filterLocation.appendChild(opt);
         }
@@ -490,7 +499,7 @@ function renderTable(historyList) {
             </td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${h.date.split(" ")[0]}</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 font-medium text-gray-900 dark:text-gray-100">${h.user}</td>
-            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${h.location}</td>
+            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${formatLocationName(h.location)}</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${h.plant}</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800"><span class="px-2 py-1 rounded-md text-xs font-bold ${badgeColor}">${h.disease}</span></td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${h.confidence}</td>
@@ -552,7 +561,7 @@ function renderUsers(usersList) {
         tr.innerHTML = `
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 font-medium text-gray-900 dark:text-gray-100">${u.name}</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${u.email}</td>
-            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${u.last_location}</td>
+            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${formatLocationName(u.last_location)}</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${u.created_at.split(" ")[0]}</td>
         `;
         tableUsersBody.appendChild(tr);

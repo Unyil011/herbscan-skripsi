@@ -62,7 +62,7 @@ window.onload = function () {
     if (!authToken) {
         // Render Google Login Button
         google.accounts.id.initialize({
-            client_id: "687002073142-b9e3b4p6sifg93g6e9okgcl8i21s1gco.apps.googleusercontent.com",
+            client_id: "287994839540-kf3i2d95ad5ef8m2gkhkeprivqqnt76f.apps.googleusercontent.com",
             callback: handleCredentialResponse
         });
         google.accounts.id.renderButton(

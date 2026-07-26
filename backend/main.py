@@ -35,7 +35,7 @@ ALGORITHM = "HS256"
 security = HTTPBearer(auto_error=False)
 
 # Google Client ID (Disesuaikan dengan kredensial Google Cloud Anda)
-GOOGLE_CLIENT_ID = "287994839540-kf3i2d95ad5ef8m2gkhkeprivqqnt76f.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "287994839540-kf3i2d95ad5ef8m2gkhkeprivqqnt76f.apps.googleusercontent.com")
 
 # Coba memuat dotenv dan google-generativeai
 try:

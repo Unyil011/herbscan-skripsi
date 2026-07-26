@@ -14,7 +14,8 @@ const statTopDisease = document.getElementById("stat-top-disease");
 const statTopPlant = document.getElementById("stat-top-plant");
 const tableBody = document.getElementById("table-body");
 
-const filterDate = document.getElementById("filter-date");
+const filterMode = document.getElementById("filter-mode");
+const filterInputContainer = document.getElementById("filter-input-container");
 const filterLocation = document.getElementById("filter-location");
 const btnFilter = document.getElementById("btn-filter");
 const btnExport = document.getElementById("btn-export");
@@ -34,8 +35,44 @@ let rawHistoryData = [];
 let selectedHistoryIds = [];
 
 // ==========================================
-// 0. NAVIGASI TAB
+// 0. NAVIGASI TAB & FILTER DINAMIS
 // ==========================================
+
+function renderFilterInputs() {
+    if (!filterMode || !filterInputContainer) return;
+    const mode = filterMode.value;
+    const today = new Date();
+    
+    // Helper format YYYY-MM-DD
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    const todayMonthStr = `${yyyy}-${mm}`;
+    
+    let html = "";
+    if (mode === "daily") {
+        html = `<input type="date" id="val-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${todayStr}">`;
+    } else if (mode === "weekly") {
+        html = `
+            <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Mulai:</span>
+            <input type="date" id="val-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${todayStr}">
+        `;
+    } else if (mode === "monthly") {
+        html = `<input type="month" id="val-month" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${todayMonthStr}">`;
+    } else if (mode === "yearly") {
+        html = `<input type="number" id="val-year" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" value="${yyyy}" min="2020" max="2100">`;
+    }
+    
+    filterInputContainer.innerHTML = html;
+}
+
+if (filterMode) {
+    filterMode.addEventListener("change", renderFilterInputs);
+    // Init pertama kali
+    renderFilterInputs();
+}
+
 window.switchView = function(viewId) {
     // Sembunyikan semua view
     document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
@@ -171,29 +208,41 @@ btnLogoutMobile?.addEventListener("click", doLogout);
 async function loadDashboardData() {
     let start = "";
     let end = "";
-    const dateVal = filterDate ? filterDate.value : "this_month";
-    const loc = filterLocation.value;
     
-    const now = new Date();
-    
-    if (dateVal === "today") {
-        start = now.toISOString().split('T')[0];
-        end = now.toISOString().split('T')[0];
-    } else if (dateVal === "7days") {
-        const d = new Date();
-        d.setDate(d.getDate() - 7);
-        start = d.toISOString().split('T')[0];
-        end = now.toISOString().split('T')[0];
-    } else if (dateVal === "30days") {
-        const d = new Date();
-        d.setDate(d.getDate() - 30);
-        start = d.toISOString().split('T')[0];
-        end = now.toISOString().split('T')[0];
-    } else if (dateVal === "this_month") {
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        start = firstDay.toISOString().split('T')[0];
-        end = now.toISOString().split('T')[0];
+    if (filterMode) {
+        const mode = filterMode.value;
+        if (mode === "daily") {
+            const d = document.getElementById("val-date")?.value;
+            if (d) {
+                start = d; end = d;
+            }
+        } else if (mode === "weekly") {
+            const d = document.getElementById("val-date")?.value;
+            if (d) {
+                start = d;
+                const endDateObj = new Date(d);
+                endDateObj.setDate(endDateObj.getDate() + 6); // 1 minggu (7 hari)
+                end = endDateObj.toISOString().split('T')[0];
+            }
+        } else if (mode === "monthly") {
+            const val = document.getElementById("val-month")?.value; // YYYY-MM
+            if (val) {
+                const [y, m] = val.split('-');
+                const firstDay = new Date(y, parseInt(m) - 1, 1);
+                const lastDay = new Date(y, parseInt(m), 0);
+                start = firstDay.toISOString().split('T')[0];
+                end = lastDay.toISOString().split('T')[0];
+            }
+        } else if (mode === "yearly") {
+            const y = document.getElementById("val-year")?.value;
+            if (y) {
+                start = `${y}-01-01`;
+                end = `${y}-12-31`;
+            }
+        }
     }
+    
+    const loc = filterLocation ? filterLocation.value : "";
     
     let query = "?";
     if (start) query += `start_date=${start}&`;

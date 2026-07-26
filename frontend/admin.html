@@ -28,6 +28,9 @@
     <!-- Leaflet CSS (Map) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
+    <!-- Custom Style & Scrollbar (Sama dengan user) -->
+    <link rel="stylesheet" href="style.css">
+    
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .glass-panel {
@@ -127,20 +130,23 @@
                 <div class="glass-panel p-4 rounded-2xl shadow-sm flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between sticky top-0 md:top-4 z-20">
                     <div>
                         <h2 id="page-title" class="text-xl font-bold text-gray-900 dark:text-white">Ringkasan Pemantauan</h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Dinas Pertanian Kab. Cianjur</p>
                     </div>
                     
                     <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
                         <div class="flex items-center gap-2 flex-1 min-w-[140px]">
-                            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Periode:</span>
-                            <select id="filter-date" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                                <option value="all">Semua Waktu</option>
-                                <option value="today">Hari Ini</option>
-                                <option value="7days">7 Hari Terakhir</option>
-                                <option value="30days">30 Hari Terakhir</option>
-                                <option value="this_month" selected>Bulan Ini</option>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Mode:</span>
+                            <select id="filter-mode" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <option value="daily">Harian</option>
+                                <option value="weekly">Mingguan</option>
+                                <option value="monthly" selected>Bulanan</option>
+                                <option value="yearly">Tahunan</option>
                             </select>
                         </div>
+                        
+                        <div id="filter-input-container" class="flex items-center gap-2 flex-1 min-w-[140px]">
+                            <!-- Input Tanggal Dinamis dari JS -->
+                        </div>
+                        
                         <div class="flex items-center gap-2 flex-1 min-w-[140px]">
                             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Kecamatan:</span>
                             <select id="filter-location" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
@@ -300,8 +306,12 @@
                 </div>
 
                 <!-- Footer -->
-                <footer class="text-center text-sm text-gray-500 dark:text-gray-400 py-6 border-t border-gray-200 dark:border-gray-800">
-                    &copy; 2026 Dasbor Admin HerbScan. Universitas Suryakancana Cianjur.
+                <footer class="mt-auto py-8 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+                    <div class="container mx-auto px-6 text-center">
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">HerbScan Admin</h2>
+                        <p class="text-sm text-gray-400 dark:text-gray-500 mb-6">Membantu petani rempah melindungi panen mereka dengan teknologi AI terdepan.</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">&copy; 2026 <span class="text-emerald-500 font-bold tracking-widest">RivalRam</span>. Seluruh Hak Cipta Dilindungi.</p>
+                    </div>
                 </footer>
             </div>
         </main>

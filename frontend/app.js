@@ -1,5 +1,7 @@
 // Konstanta Backend URL (Kosong = gunakan domain yang sama)
-const BACKEND_URL = "";
+const BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
+    ? "http://localhost:8000" 
+    : "https://herbscan-skripsi.vercel.app";
 
 // --- REFERENSI DOM UTAMA ---
 const dropzone = document.getElementById("dropzone");
@@ -207,9 +209,9 @@ function updateAuthUI() {
     if (authToken && userData) {
         if(googleLoginBtnArea) googleLoginBtnArea.classList.add("hidden");
         const customLoginBtn = document.getElementById("custom-login-btn");
-        if(customLoginBtn) customLoginBtn.classList.add("hidden");
+        if(customLoginBtn) { customLoginBtn.classList.add("hidden"); customLoginBtn.style.display = "none"; }
         const customLoginBtnMobile = document.getElementById("custom-login-btn-mobile");
-        if(customLoginBtnMobile) customLoginBtnMobile.classList.add("hidden");
+        if(customLoginBtnMobile) { customLoginBtnMobile.classList.add("hidden"); customLoginBtnMobile.style.display = "none"; }
         
         if(userProfile) userProfile.classList.remove("hidden");
         
@@ -231,9 +233,9 @@ function updateAuthUI() {
     } else {
         if(googleLoginBtnArea) googleLoginBtnArea.classList.remove("hidden");
         const customLoginBtn = document.getElementById("custom-login-btn");
-        if(customLoginBtn) customLoginBtn.classList.remove("hidden");
+        if(customLoginBtn) { customLoginBtn.classList.remove("hidden"); customLoginBtn.style.display = ""; }
         const customLoginBtnMobile = document.getElementById("custom-login-btn-mobile");
-        if(customLoginBtnMobile) customLoginBtnMobile.classList.remove("hidden");
+        if(customLoginBtnMobile) { customLoginBtnMobile.classList.remove("hidden"); customLoginBtnMobile.style.display = ""; }
         
         if(userProfile) userProfile.classList.add("hidden");
         if(navHistory) navHistory.classList.add("hidden");

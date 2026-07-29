@@ -499,7 +499,7 @@ function renderMap(points) {
     
     // Hapus marker lama
     leafletMap.eachLayer((layer) => {
-        if (layer instanceof L.CircleMarker) {
+        if (layer instanceof L.CircleMarker || layer instanceof L.Marker) {
             leafletMap.removeLayer(layer);
         }
     });
@@ -521,14 +521,19 @@ function renderMap(points) {
             uniqueDiseases.add(normalizeName(p.disease));
             const color = getDiseaseColor(p.disease);
             
-            L.circleMarker([p.lat, p.lng], {
-                radius: 8,
-                fillColor: color,
-                color: "#ffffff",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).addTo(leafletMap).bindPopup(`<b>Penyakit:</b> ${p.disease}`);
+            // Ambil inisial tanaman (J untuk Jahe, K untuk Kencur/Kapulaga)
+            const initial = p.plant ? p.plant.charAt(0).toUpperCase() : '?';
+            
+            const customIcon = L.divIcon({
+                className: 'custom-map-marker',
+                html: `<div style="background-color: ${color}; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid white; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 11px; opacity: 0.95; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">${initial}</div>`,
+                iconSize: [22, 22],
+                iconAnchor: [11, 11]
+            });
+            
+            L.marker([p.lat, p.lng], { icon: customIcon })
+                .addTo(leafletMap)
+                .bindPopup(`<b>Tanaman:</b> ${p.plant}<br><b>Penyakit:</b> ${p.disease}`);
         }
     });
 

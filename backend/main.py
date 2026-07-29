@@ -35,6 +35,7 @@ try:
     db_session = SessionLocal()
     try:
         db_session.execute(text("ALTER TABLE histories ADD COLUMN deleted_by_user BOOLEAN DEFAULT FALSE;"))
+        db_session.execute(text("ALTER TABLE histories ADD COLUMN deleted_by_admin BOOLEAN DEFAULT FALSE;"))
         db_session.commit()
     except Exception as e:
         db_session.rollback() # Abaikan jika kolom sudah ada
@@ -298,7 +299,10 @@ async def delete_history(history_id: int, current_user: models.User = Depends(ge
     if not history:
         raise HTTPException(status_code=404, detail="Riwayat tidak ditemukan")
         
-    history.deleted_by_user = True
+    if history.deleted_by_admin:
+        db.delete(history)
+    else:
+        history.deleted_by_user = True
     db.commit()
     
     return {"status": "success", "message": "Riwayat berhasil dihapus"}
@@ -314,10 +318,16 @@ async def delete_history_bulk(req: DeleteBulkRequest, current_user: models.User 
     if not current_user:
         raise HTTPException(status_code=401, detail="Anda belum login")
         
-    db.query(models.History).filter(
+    histories = db.query(models.History).filter(
         models.History.id.in_(req.history_ids), 
         models.History.user_id == current_user.id
-    ).update({"deleted_by_user": True}, synchronize_session=False)
+    ).all()
+    
+    for h in histories:
+        if h.deleted_by_admin:
+            db.delete(h)
+        else:
+            h.deleted_by_user = True
     db.commit()
     
     return {"status": "success", "message": "Riwayat yang dipilih berhasil dihapus"}
@@ -510,7 +520,7 @@ async def get_admin_stats(
     admin_user: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
-    query = db.query(models.History)
+    query = db.query(models.History).filter(models.History.deleted_by_admin == False)
     
     if start_date:
         try:
@@ -533,7 +543,7 @@ async def get_admin_stats(
     total_users = db.query(models.User).count()
     
     # Penyakit terbanyak
-    disease_counts_query = db.query(models.History.disease_class, func.count(models.History.id).label('count'))
+    disease_counts_query = db.query(models.History.disease_class, func.count(models.History.id).label('count')).filter(models.History.deleted_by_admin == False)
     if start_date or end_date or location:
         if start_date: disease_counts_query = disease_counts_query.filter(models.History.created_at >= start)
         if end_date: disease_counts_query = disease_counts_query.filter(models.History.created_at < end)
@@ -541,7 +551,7 @@ async def get_admin_stats(
     disease_counts = disease_counts_query.group_by(models.History.disease_class).order_by(func.count(models.History.id).desc()).all()
     
     # Tanaman terbanyak
-    plant_counts_query = db.query(models.History.plant_name, func.count(models.History.id).label('count'))
+    plant_counts_query = db.query(models.History.plant_name, func.count(models.History.id).label('count')).filter(models.History.deleted_by_admin == False)
     if start_date or end_date or location:
         if start_date: plant_counts_query = plant_counts_query.filter(models.History.created_at >= start)
         if end_date: plant_counts_query = plant_counts_query.filter(models.History.created_at < end)
@@ -549,7 +559,7 @@ async def get_admin_stats(
     plant_counts = plant_counts_query.group_by(models.History.plant_name).order_by(func.count(models.History.id).desc()).all()
     
     # Lokasi rawan (Kecamatan)
-    location_counts_query = db.query(models.History.location, func.count(models.History.id).label('count'))
+    location_counts_query = db.query(models.History.location, func.count(models.History.id).label('count')).filter(models.History.deleted_by_admin == False)
     if start_date or end_date:
         if start_date: location_counts_query = location_counts_query.filter(models.History.created_at >= start)
         if end_date: location_counts_query = location_counts_query.filter(models.History.created_at < end)
@@ -559,7 +569,7 @@ async def get_admin_stats(
     trend_query = db.query(
         func.date(models.History.created_at).label('date'),
         func.count(models.History.id).label('count')
-    )
+    ).filter(models.History.deleted_by_admin == False)
     if start_date or end_date or location:
         if start_date: trend_query = trend_query.filter(models.History.created_at >= start)
         if end_date: trend_query = trend_query.filter(models.History.created_at < end)
@@ -602,7 +612,7 @@ async def get_admin_history(
         models.History.plant_name,
         models.History.disease_class,
         models.History.confidence
-    ).join(models.User, models.History.user_id == models.User.id)
+    ).join(models.User, models.History.user_id == models.User.id).filter(models.History.deleted_by_admin == False)
     
     if start_date:
         try:
@@ -648,7 +658,10 @@ async def delete_admin_history(
     if not history_obj:
         raise HTTPException(status_code=404, detail="Riwayat tidak ditemukan")
     
-    db.delete(history_obj)
+    if history_obj.deleted_by_user:
+        db.delete(history_obj)
+    else:
+        history_obj.deleted_by_admin = True
     db.commit()
     return {"status": "success", "message": "Riwayat berhasil dihapus"}
 
@@ -662,7 +675,12 @@ async def delete_admin_history_bulk(
     db: Session = Depends(get_db)
 ):
     try:
-        db.query(models.History).filter(models.History.id.in_(request.ids)).delete(synchronize_session=False)
+        histories = db.query(models.History).filter(models.History.id.in_(request.ids)).all()
+        for h in histories:
+            if h.deleted_by_user:
+                db.delete(h)
+            else:
+                h.deleted_by_admin = True
         db.commit()
         return {"status": "success", "message": f"{len(request.ids)} laporan berhasil dihapus"}
     except Exception as e:

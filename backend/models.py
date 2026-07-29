@@ -32,7 +32,8 @@ class History(Base):
     lat = Column(Float, nullable=True) # Latitude
     lng = Column(Float, nullable=True) # Longitude
     
-    deleted_by_user = Column(Boolean, default=False) # Soft delete flag
+    deleted_by_user = Column(Boolean, default=False) # Soft delete flag petani
+    deleted_by_admin = Column(Boolean, default=False) # Soft delete flag admin
     
     created_at = Column(DateTime, default=datetime.utcnow)
 

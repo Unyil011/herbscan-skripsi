@@ -339,9 +339,18 @@ function populateLocationFilter(locations) {
 // 4. RENDER UI
 // ==========================================
 function renderStats(data) {
+    const loc = filterLocation && filterLocation.value ? formatLocationName(filterLocation.value) : "";
+    const locText = loc ? ` (${loc})` : "";
+
     statUsers.textContent = data.total_users.toLocaleString();
     statScans.textContent = data.total_scans.toLocaleString();
     
+    const diseaseLabel = statTopDisease.previousElementSibling;
+    if(diseaseLabel) diseaseLabel.textContent = `Penyakit Terbanyak${locText}`;
+    
+    const plantLabel = statTopPlant.previousElementSibling;
+    if(plantLabel) plantLabel.textContent = `Tanaman Terbanyak${locText}`;
+
     if (data.diseases.length > 0) {
         statTopDisease.textContent = data.diseases[0].name;
     } else {
@@ -452,6 +461,22 @@ function renderCharts(data) {
     });
 }
 
+function getDiseaseColor(disease) {
+    const name = disease.toLowerCase();
+    if(name.includes("sehat")) return "#10B981"; 
+    if(name.includes("bercak daun jamur")) return "#F59E0B"; 
+    if(name.includes("bercak kuning")) return "#EAB308"; 
+    if(name.includes("karat daun")) return "#D97706"; 
+    if(name.includes("busuk")) return "#78350F"; 
+    if(name.includes("kutu")) return "#8B5CF6"; 
+    if(name.includes("hama")) return "#EF4444"; 
+    
+    const colors = ["#EF4444", "#EC4899", "#14B8A6", "#3B82F6", "#F43F5E", "#8B5CF6"];
+    let hash = 0;
+    for(let i=0; i<name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+}
+
 function renderMap(points) {
     if (!leafletMap) {
         // Inisialisasi Peta (Center di Cianjur)
@@ -471,8 +496,7 @@ function renderMap(points) {
     // Tambah marker baru
     points.forEach(p => {
         if (p.lat && p.lng) {
-            const isHealthy = p.disease.toLowerCase().includes("sehat");
-            const color = isHealthy ? "#10B981" : "#EF4444";
+            const color = getDiseaseColor(p.disease);
             
             L.circleMarker([p.lat, p.lng], {
                 radius: 8,
@@ -480,7 +504,7 @@ function renderMap(points) {
                 color: "#ffffff",
                 weight: 1,
                 opacity: 1,
-                fillOpacity: 0.7
+                fillOpacity: 0.8
             }).addTo(leafletMap).bindPopup(`<b>Penyakit:</b> ${p.disease}`);
         }
     });
@@ -636,20 +660,51 @@ btnExport.addEventListener("click", () => {
         return;
     }
     
-    // Siapkan data untuk excel
-    const excelData = rawHistoryData.map(h => ({
-        "Tanggal": h.date,
-        "Nama Pengguna": h.user,
-        "Lokasi (Kecamatan)": h.location,
-        "Tanaman": h.plant,
-        "Diagnosis Penyakit": h.disease,
-        "Akurasi AI": h.confidence
-    }));
+    // Siapkan teks filter untuk Header Excel
+    let filterTextPeriode = "Semua Waktu";
+    const mode = filterMode ? filterMode.value : "";
+    if (mode === "daily") filterTextPeriode = `Harian (${document.getElementById("val-date")?.value || "-"})`;
+    else if (mode === "weekly") filterTextPeriode = `Mingguan (Mulai ${document.getElementById("val-date")?.value || "-"})`;
+    else if (mode === "monthly") filterTextPeriode = `Bulanan (${document.getElementById("val-month")?.value || "-"})`;
+    else if (mode === "yearly") filterTextPeriode = `Tahunan (${document.getElementById("val-year")?.value || "-"})`;
+
+    const filterTextLokasi = filterLocation && filterLocation.value ? formatLocationName(filterLocation.value) : "Semua Kecamatan";
+
+    // Header array
+    const ws_data = [
+        ["LAPORAN REKAPITULASI DETEKSI HAMA REMPAH - HERBSCAN AI"],
+        [`Lokasi: ${filterTextLokasi}`],
+        [`Periode: ${filterTextPeriode}`],
+        ["Tanggal Cetak: " + new Date().toLocaleString("id-ID")],
+        [], // Empty row before table
+        ["Tanggal", "Nama Pengguna", "Lokasi (Kecamatan)", "Tanaman", "Diagnosis Penyakit", "Akurasi AI"] // Table headers
+    ];
+
+    // Push data rows
+    rawHistoryData.forEach(h => {
+        ws_data.push([
+            h.date,
+            h.user,
+            formatLocationName(h.location),
+            h.plant,
+            h.disease,
+            h.confidence
+        ]);
+    });
+
+    const worksheet = XLSX.utils.aoa_to_sheet(ws_data);
     
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    // Merging header cells
+    if(!worksheet['!merges']) worksheet['!merges'] = [];
+    worksheet['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }); // Merge Title
+    worksheet['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }); // Merge Lokasi
+    worksheet['!merges'].push({ s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }); // Merge Periode
+    worksheet['!merges'].push({ s: { r: 3, c: 0 }, e: { r: 3, c: 5 } }); // Merge Tanggal Cetak
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Penyakit");
     
     // Download file
-    XLSX.writeFile(workbook, `Laporan_HerbScan_${new Date().toISOString().split('T')[0]}.xlsx`);
+    const safeLocName = filterTextLokasi.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    XLSX.writeFile(workbook, `Laporan_HerbScan_${safeLocName}_${new Date().toISOString().split('T')[0]}.xlsx`);
 });

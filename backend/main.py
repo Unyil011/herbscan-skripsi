@@ -35,6 +35,11 @@ try:
     db_session = SessionLocal()
     try:
         db_session.execute(text("ALTER TABLE histories ADD COLUMN deleted_by_user BOOLEAN DEFAULT FALSE;"))
+        db_session.commit()
+    except Exception as e:
+        db_session.rollback() # Abaikan jika kolom sudah ada
+        
+    try:
         db_session.execute(text("ALTER TABLE histories ADD COLUMN deleted_by_admin BOOLEAN DEFAULT FALSE;"))
         db_session.commit()
     except Exception as e:

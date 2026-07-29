@@ -311,7 +311,7 @@ async function loadDashboardData() {
         
     } catch (e) {
         console.error(e);
-        alert("Gagal memuat data dasbor.");
+        Swal.fire('Gagal', "Gagal memuat data dasbor.", 'error');
     } finally {
         if (btnFilter) {
             btnFilter.innerHTML = originalBtnText || '<i class="fa-solid fa-filter"></i> Terapkan';
@@ -646,7 +646,18 @@ function renderUsers(usersList) {
 }
 
 window.deleteHistory = async function(id) {
-    if(!confirm("Apakah Anda yakin ingin menghapus laporan ini? Data yang dihapus tidak bisa dikembalikan.")) return;
+    const result = await Swal.fire({
+        title: 'Hapus Laporan?',
+        text: "Data yang dihapus tidak bisa dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+    });
+    
+    if(!result.isConfirmed) return;
     
     try {
         const res = await fetch(`${BACKEND_URL}/admin/history/${id}`, {
@@ -656,20 +667,33 @@ window.deleteHistory = async function(id) {
         const data = await res.json();
         
         if (res.ok && data.status === "success") {
+            Swal.fire('Terhapus!', 'Laporan berhasil dihapus.', 'success');
             loadDashboardData(); // Refresh ulang datanya
         } else {
-            alert(data.detail || "Gagal menghapus laporan.");
+            Swal.fire('Gagal!', data.detail || "Gagal menghapus laporan.", 'error');
         }
     } catch (err) {
         console.error(err);
-        alert("Terjadi kesalahan pada server saat menghapus laporan.");
+        Swal.fire('Error!', "Terjadi kesalahan pada server saat menghapus laporan.", 'error');
     }
 };
 
 if(btnBulkDelete) {
     btnBulkDelete.addEventListener("click", async () => {
         if(selectedHistoryIds.length === 0) return;
-        if(!confirm(`Yakin ingin menghapus ${selectedHistoryIds.length} laporan terpilih secara permanen?`)) return;
+        
+        const result = await Swal.fire({
+            title: 'Hapus Laporan Massal?',
+            text: `Yakin ingin menghapus ${selectedHistoryIds.length} laporan terpilih secara permanen?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Hapus Semua!',
+            cancelButtonText: 'Batal'
+        });
+
+        if(!result.isConfirmed) return;
 
         try {
             const res = await fetch(`${BACKEND_URL}/admin/history/bulk`, {
@@ -684,13 +708,14 @@ if(btnBulkDelete) {
             const data = await res.json();
             
             if (res.ok && data.status === "success") {
+                Swal.fire('Terhapus!', `${selectedHistoryIds.length} laporan berhasil dihapus.`, 'success');
                 loadDashboardData(); // Refresh ulang datanya
             } else {
-                alert(data.detail || "Gagal menghapus laporan massal.");
+                Swal.fire('Gagal!', data.detail || "Gagal menghapus laporan massal.", 'error');
             }
         } catch (err) {
             console.error(err);
-            alert("Terjadi kesalahan pada server saat menghapus laporan.");
+            Swal.fire('Error!', "Terjadi kesalahan pada server saat menghapus laporan.", 'error');
         }
     });
 }
@@ -700,7 +725,7 @@ if(btnBulkDelete) {
 // ==========================================
 btnExport.addEventListener("click", () => {
     if (rawHistoryData.length === 0) {
-        alert("Tidak ada data untuk diekspor.");
+        Swal.fire('Data Kosong', "Tidak ada data laporan untuk diekspor ke Excel.", 'info');
         return;
     }
     

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
@@ -31,6 +31,8 @@ class History(Base):
     location = Column(String, default="Tidak Diketahui") # Nama Kecamatan
     lat = Column(Float, nullable=True) # Latitude
     lng = Column(Float, nullable=True) # Longitude
+    
+    deleted_by_user = Column(Boolean, default=False) # Soft delete flag
     
     created_at = Column(DateTime, default=datetime.utcnow)
 

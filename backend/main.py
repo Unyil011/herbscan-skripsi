@@ -28,6 +28,19 @@ import models
 # Inisialisasi Tabel Database
 try:
     models.Base.metadata.create_all(bind=engine)
+    
+    # [MIGRASI OTOMATIS] Tambah kolom deleted_by_user jika belum ada
+    from sqlalchemy import text
+    from database import SessionLocal
+    db_session = SessionLocal()
+    try:
+        db_session.execute(text("ALTER TABLE histories ADD COLUMN deleted_by_user BOOLEAN DEFAULT FALSE;"))
+        db_session.commit()
+    except Exception as e:
+        db_session.rollback() # Abaikan jika kolom sudah ada
+    finally:
+        db_session.close()
+        
 except Exception as e:
     print("WARNING: Gagal inisialisasi tabel database saat boot:", e)
 
@@ -266,7 +279,10 @@ async def get_history(current_user: models.User = Depends(get_current_user), db:
     if not current_user:
         raise HTTPException(status_code=401, detail="Anda belum login")
     
-    histories = db.query(models.History).filter(models.History.user_id == current_user.id).order_by(models.History.created_at.desc()).all()
+    histories = db.query(models.History).filter(
+        models.History.user_id == current_user.id,
+        models.History.deleted_by_user == False
+    ).order_by(models.History.created_at.desc()).all()
     
     return {
         "status": "success",
@@ -282,7 +298,7 @@ async def delete_history(history_id: int, current_user: models.User = Depends(ge
     if not history:
         raise HTTPException(status_code=404, detail="Riwayat tidak ditemukan")
         
-    db.delete(history)
+    history.deleted_by_user = True
     db.commit()
     
     return {"status": "success", "message": "Riwayat berhasil dihapus"}
@@ -301,7 +317,7 @@ async def delete_history_bulk(req: DeleteBulkRequest, current_user: models.User 
     db.query(models.History).filter(
         models.History.id.in_(req.history_ids), 
         models.History.user_id == current_user.id
-    ).delete(synchronize_session=False)
+    ).update({"deleted_by_user": True}, synchronize_session=False)
     db.commit()
     
     return {"status": "success", "message": "Riwayat yang dipilih berhasil dihapus"}

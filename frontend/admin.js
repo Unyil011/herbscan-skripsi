@@ -258,6 +258,12 @@ async function loadDashboardData() {
     if (end) query += `end_date=${end}&`;
     if (loc) query += `location=${encodeURIComponent(loc)}&`;
     
+    const originalBtnText = btnFilter ? btnFilter.innerHTML : "";
+    if (btnFilter) {
+        btnFilter.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memuat...';
+        btnFilter.disabled = true;
+    }
+    
     try {
         // 1. Fetch Stats
         const statRes = await fetch(`${BACKEND_URL}/admin/stats${query}`, {
@@ -306,6 +312,11 @@ async function loadDashboardData() {
     } catch (e) {
         console.error(e);
         alert("Gagal memuat data dasbor.");
+    } finally {
+        if (btnFilter) {
+            btnFilter.innerHTML = originalBtnText || '<i class="fa-solid fa-filter"></i> Terapkan';
+            btnFilter.disabled = false;
+        }
     }
 }
 
@@ -493,9 +504,13 @@ function renderMap(points) {
         }
     });
 
+    const legendContainer = document.getElementById("map-legend");
+    const uniqueDiseases = new Set();
+
     // Tambah marker baru
     points.forEach(p => {
         if (p.lat && p.lng) {
+            uniqueDiseases.add(p.disease);
             const color = getDiseaseColor(p.disease);
             
             L.circleMarker([p.lat, p.lng], {
@@ -508,6 +523,22 @@ function renderMap(points) {
             }).addTo(leafletMap).bindPopup(`<b>Penyakit:</b> ${p.disease}`);
         }
     });
+
+    if (legendContainer) {
+        legendContainer.innerHTML = "";
+        if (uniqueDiseases.size === 0) {
+            legendContainer.innerHTML = `<span class="text-gray-500">Belum ada data</span>`;
+        } else {
+            uniqueDiseases.forEach(disease => {
+                const color = getDiseaseColor(disease);
+                const span = document.createElement("span");
+                span.className = "px-2 py-1 rounded-md text-white font-medium shadow-sm";
+                span.style.backgroundColor = color;
+                span.textContent = disease;
+                legendContainer.appendChild(span);
+            });
+        }
+    }
 }
 
 function renderTable(historyList) {
@@ -535,7 +566,7 @@ function renderTable(historyList) {
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${formatLocationName(h.location)}</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${h.plant}</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800"><span class="px-2 py-1 rounded-md text-xs font-bold ${badgeColor}">${h.disease}</span></td>
-            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">${h.confidence}</td>
+            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 font-bold text-gray-700 dark:text-gray-300">${(parseFloat(h.confidence) * 100).toFixed(0)}%</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 text-center">
                 <button onclick="deleteHistory(${h.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 p-2 rounded-lg transition" title="Hapus Laporan">
                     <i class="fa-solid fa-trash"></i>
@@ -688,7 +719,7 @@ btnExport.addEventListener("click", () => {
             formatLocationName(h.location),
             h.plant,
             h.disease,
-            h.confidence
+            (parseFloat(h.confidence) * 100).toFixed(0) + "%"
         ]);
     });
 

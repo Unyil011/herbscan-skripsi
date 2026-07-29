@@ -228,9 +228,11 @@
                             </div>
                         </div>
                         <div class="glass-panel p-6 rounded-2xl shadow-sm">
-                            <div class="flex items-center justify-between mb-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">Peta Sebaran (Heatmap)</h3>
-                                <span class="text-xs bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded-md">Titik Merah = Sakit</span>
+                                <div id="map-legend" class="flex flex-wrap gap-2 text-[10px] md:text-xs">
+                                    <!-- Legenda akan diisi otomatis via JS -->
+                                </div>
                             </div>
                             <div id="map" class="shadow-inner" style="height: 256px;"></div>
                         </div>

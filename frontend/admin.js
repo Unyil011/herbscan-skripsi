@@ -507,10 +507,18 @@ function renderMap(points) {
     const legendContainer = document.getElementById("map-legend");
     const uniqueDiseases = new Set();
 
+    // Fungsi normalisasi nama (menghapus kata "Penyakit " di awal agar tidak duplikat)
+    const normalizeName = (name) => {
+        let n = name.trim();
+        if(n.toLowerCase().startsWith("penyakit ")) n = n.substring(9).trim();
+        // Kapitalisasi tiap kata
+        return n.replace(/\b\w/g, c => c.toUpperCase());
+    };
+
     // Tambah marker baru
     points.forEach(p => {
         if (p.lat && p.lng) {
-            uniqueDiseases.add(p.disease);
+            uniqueDiseases.add(normalizeName(p.disease));
             const color = getDiseaseColor(p.disease);
             
             L.circleMarker([p.lat, p.lng], {

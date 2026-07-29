@@ -338,19 +338,20 @@ async def predict(
             # Tetap catat riwayat jika user login
             if current_user:
                 cached_data = predict_cache[image_hash]
-                new_history = models.History(
-                    user_id=current_user.id,
-                    plant_name=cached_data["plant"],
-                    disease_class=cached_data["class_name"],
-                    confidence=cached_data["confidence"],
-                    recommendation=cached_data["recommendation"],
-                    image_filename=cached_data.get("image_filename"),
-                    location=location,
-                    lat=lat,
-                    lng=lng
-                )
-                db.add(new_history)
-                db.commit()
+                if cached_data["plant"].lower() not in ["bukan tanaman rempah", "tidak dikenali", "undefined", "unknown"]:
+                    new_history = models.History(
+                        user_id=current_user.id,
+                        plant_name=cached_data["plant"],
+                        disease_class=cached_data["class_name"],
+                        confidence=cached_data["confidence"],
+                        recommendation=cached_data["recommendation"],
+                        image_filename=cached_data.get("image_filename"),
+                        location=location,
+                        lat=lat,
+                        lng=lng
+                    )
+                    db.add(new_history)
+                    db.commit()
             return predict_cache[image_hash]
 
         image = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -382,7 +383,7 @@ async def predict(
         }
         
         # Simpan ke Database Riwayat
-        if current_user:
+        if current_user and result_data["plant"].lower() not in ["bukan tanaman rempah", "tidak dikenali", "undefined", "unknown"]:
             new_history = models.History(
                 user_id=current_user.id,
                 plant_name=result_data["plant"],
@@ -449,7 +450,7 @@ async def predict(
             }
 
             # Simpan ke Database Riwayat & Ingatan Piksel
-            if current_user:
+            if current_user and result_data["plant"].lower() not in ["bukan tanaman rempah", "tidak dikenali", "undefined", "unknown"]:
                 new_history = models.History(
                     user_id=current_user.id,
                     plant_name=result_data["plant"],
@@ -553,7 +554,7 @@ async def get_admin_stats(
 
     # Data Map Points (Lat/Lng)
     map_points = query.filter(models.History.lat.isnot(None), models.History.lng.isnot(None)).with_entities(
-        models.History.lat, models.History.lng, models.History.disease_class
+        models.History.lat, models.History.lng, models.History.disease_class, models.History.plant_name
     ).all()
 
     return {
@@ -565,7 +566,7 @@ async def get_admin_stats(
             "plants": [{"name": r[0], "count": r[1]} for r in plant_counts],
             "locations": [{"name": r[0], "count": r[1]} for r in location_counts],
             "trends": daily_trends,
-            "map_points": [{"lat": r[0], "lng": r[1], "disease": r[2]} for r in map_points]
+            "map_points": [{"lat": r[0], "lng": r[1], "disease": r[2], "plant": r[3]} for r in map_points]
         }
     }
 

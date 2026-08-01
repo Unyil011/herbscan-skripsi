@@ -619,6 +619,7 @@ btnDeleteSelected?.addEventListener('click', () => {
 // Klik untuk unggah pada kotak dropzone pertama kali
 dropzone?.addEventListener("click", (e) => {
     if (e.target.closest('#remove-img-btn')) return;
+    if (e.target === fileInput) return; // Cegah event bubbling dari fileInput.click()
     // Cegah klik dropzone jika gambar sudah ada
     if (currentFile) return;
     

@@ -200,11 +200,11 @@ async function handleCredentialResponse(response) {
             const loginPromptArea = document.getElementById("login-prompt-area");
             if (loginPromptArea && !loginPromptArea.classList.contains("hidden")) {
                 loginPromptArea.classList.add("hidden");
-                if (detectBtn && currentFile) {
+                if (currentFile) {
                     showToast("Menyinkronkan riwayat Anda ke Cloud...", false);
-                    // Memicu deteksi ulang. Jangan khawatir, backend akan langsung 
-                    // membaca dari MD5 Cache (0 detik) lalu menyimpannya ke Database
-                    detectBtn.click(); 
+                    // Kirim ulang deteksi di latar belakang (tanpa mengubah UI)
+                    // Backend akan otomatis membaca dari MD5 Cache dan menyimpannya
+                    silentRetroactiveSave();
                 }
             }
             
@@ -623,6 +623,30 @@ btnDeleteSelected?.addEventListener('click', () => {
 });
 
 
+
+// Fungsi penyokong untuk menyimpan riwayat retroaktif secara diam-diam (background)
+async function silentRetroactiveSave() {
+    if (!currentFile || !authToken) return;
+    try {
+        const locData = await getLocation();
+        const formData = new FormData();
+        formData.append("file", currentFile);
+        if(locData.location) formData.append("location", locData.location);
+        if(locData.lat) formData.append("lat", locData.lat);
+        if(locData.lng) formData.append("lng", locData.lng);
+
+        const res = await fetch(`${BACKEND_URL}/predict`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${authToken}` },
+            body: formData
+        });
+        if (res.ok) {
+            showToast("Riwayat berhasil disimpan permanen secara otomatis!");
+        }
+    } catch(e) {
+        console.error("Silent save error", e);
+    }
+}
 
 // ============================================================================
 // 3. LOGIKA UPLOAD GAMBAR & KAMERA

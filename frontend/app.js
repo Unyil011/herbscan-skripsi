@@ -116,6 +116,8 @@ let currentFile = null;
 let authToken = localStorage.getItem("herbscan_token") || null;
 let userData = JSON.parse(localStorage.getItem("herbscan_user")) || null;
 let pendingAction = null; // Menyimpan aksi (upload/camera) jika tertahan modal login
+let pendingDroppedFile = null; // Menyimpan file hasil drag & drop
+let isCameraActive = false;
 let mediaStream = null; // Untuk stream kamera
 
 // ============================================================================
@@ -199,6 +201,10 @@ async function handleCredentialResponse(response) {
                 fileInput.click();
             } else if (pendingAction === "camera") {
                 openCamera();
+            } else if (pendingAction === "drop" && pendingDroppedFile) {
+                handleFileSelect(pendingDroppedFile[0]);
+                fileInput.files = pendingDroppedFile;
+                pendingDroppedFile = null;
             }
             pendingAction = null;
             
@@ -615,7 +621,13 @@ dropzone?.addEventListener("click", (e) => {
     if (e.target.closest('#remove-img-btn')) return;
     // Cegah klik dropzone jika gambar sudah ada
     if (currentFile) return;
-    if(fileInput) fileInput.click();
+    
+    if (!authToken) {
+        pendingAction = "upload";
+        guestLoginModal.classList.remove("hidden");
+    } else {
+        if(fileInput) fileInput.click();
+    }
 });
 
 fileInput?.addEventListener("change", (e) => {
@@ -636,8 +648,14 @@ dropzone?.addEventListener("drop", (e) => {
     e.preventDefault();
     dropzone.classList.remove("border-emerald-400", "bg-emerald-900/20");
     if (e.dataTransfer.files.length > 0) {
-        handleFileSelect(e.dataTransfer.files[0]);
-        fileInput.files = e.dataTransfer.files;
+        if (!authToken) {
+            pendingAction = "drop";
+            pendingDroppedFile = e.dataTransfer.files;
+            guestLoginModal.classList.remove("hidden");
+        } else {
+            handleFileSelect(e.dataTransfer.files[0]);
+            fileInput.files = e.dataTransfer.files;
+        }
     }
 });
 
@@ -702,6 +720,10 @@ btnContinueGuest?.addEventListener("click", () => {
         fileInput.click();
     } else if (pendingAction === "camera") {
         openCamera();
+    } else if (pendingAction === "drop" && pendingDroppedFile) {
+        handleFileSelect(pendingDroppedFile[0]);
+        fileInput.files = pendingDroppedFile;
+        pendingDroppedFile = null;
     }
     pendingAction = null;
 });

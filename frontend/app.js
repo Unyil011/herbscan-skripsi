@@ -230,7 +230,6 @@ function updateAuthUI() {
         const mobileProfileInfo = document.getElementById("mobile-profile-info");
         if(mobileProfileInfo) mobileProfileInfo.classList.remove("hidden");
         
-        if(loginPromptArea) loginPromptArea.classList.add("hidden");
         if(btnDownloadPdf) btnDownloadPdf.classList.remove("hidden");
     } else {
         if(googleLoginBtnArea) googleLoginBtnArea.classList.remove("hidden");
@@ -865,12 +864,6 @@ detectBtn?.addEventListener("click", async () => {
         
         if (res.ok && data.status === "success") {
             displayResults(data);
-            if (!authToken) {
-                // Munculkan bujukan login jika Guest
-                loginPromptArea.classList.remove("hidden");
-            } else {
-                loginPromptArea.classList.add("hidden");
-            }
         } else {
             showToast(data.detail || "Terjadi kesalahan di server.", true);
             resetResultView();
@@ -1247,8 +1240,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
             }
-            
-            if(loginPromptArea) loginPromptArea.classList.add("hidden");
             
             // Bersihkan URL agar tidak ter-load lagi jika di-refresh
             window.history.replaceState({}, document.title, "scanner.html");

@@ -82,7 +82,9 @@ const btnCapturePhoto = document.getElementById("btn-capture-photo");
 const cameraCanvas = document.getElementById("camera-canvas");
 
 const loginModal = document.getElementById("login-modal");
+const guestLoginModal = document.getElementById("guest-login-modal");
 const googleLoginModalBtn = document.getElementById("google-login-modal-btn");
+const googleGuestLoginModalBtn = document.getElementById("google-guest-login-modal-btn");
 const btnContinueGuest = document.getElementById("btn-continue-guest");
 
 // DOM Autentikasi & Profil
@@ -133,10 +135,16 @@ function renderGoogleButtons() {
     });
 
     // Render tombol di header (jika ada)
-    if (googleLoginBtnArea) {
+    if (googleLoginModalBtn) {
         google.accounts.id.renderButton(
-            googleLoginBtnArea,
-            { theme: "outline", size: "large", text: "signin", shape: "pill" }
+            googleLoginModalBtn,
+            { theme: "outline", size: "large", width: 280, shape: "pill" }
+        );
+    }
+    if (googleGuestLoginModalBtn) {
+        google.accounts.id.renderButton(
+            googleGuestLoginModalBtn,
+            { theme: "outline", size: "large", width: 280, shape: "pill" }
         );
     }
     
@@ -184,6 +192,7 @@ async function handleCredentialResponse(response) {
             showToast("Berhasil masuk. Riwayat Anda sekarang aktif!");
             updateAuthUI();
             loginModal.classList.add("hidden");
+            if (guestLoginModal) guestLoginModal.classList.add("hidden");
             
             // Lanjutkan aksi yang tertahan (jika ada)
             if (pendingAction === "upload") {
@@ -670,7 +679,7 @@ removeImgBtn?.addEventListener("click", (e) => {
 btnNewPhoto?.addEventListener("click", () => {
     if (!authToken) {
         pendingAction = "upload";
-        loginModal.classList.remove("hidden");
+        guestLoginModal.classList.remove("hidden");
     } else {
         fileInput.click();
     }
@@ -680,7 +689,7 @@ btnNewPhoto?.addEventListener("click", () => {
 btnOpenCamera?.addEventListener("click", () => {
     if (!authToken) {
         pendingAction = "camera";
-        loginModal.classList.remove("hidden");
+        guestLoginModal.classList.remove("hidden");
     } else {
         openCamera();
     }
@@ -688,7 +697,7 @@ btnOpenCamera?.addEventListener("click", () => {
 
 // Lanjutkan Tanpa Login (Guest)
 btnContinueGuest?.addEventListener("click", () => {
-    loginModal.classList.add("hidden");
+    guestLoginModal.classList.add("hidden");
     if (pendingAction === "upload") {
         fileInput.click();
     } else if (pendingAction === "camera") {

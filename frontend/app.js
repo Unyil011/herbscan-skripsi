@@ -95,9 +95,6 @@ const profilePic = document.getElementById("profile-pic");
 const profileName = document.getElementById("profile-name");
 const profileDropdown = document.getElementById("profile-dropdown");
 const btnLogout = document.getElementById("btn-logout");
-const loginPromptArea = document.getElementById("login-prompt-area");
-const googleLoginBtnPrompt = document.getElementById("google-login-btn-prompt");
-
 // DOM Navbar Mobile
 const mobileMenuBtn = document.getElementById("mobile-menu-btn");
 const mobileMenu = document.getElementById("mobile-menu");
@@ -119,7 +116,6 @@ let pendingAction = null; // Menyimpan aksi (upload/camera) jika tertahan modal 
 let pendingDroppedFile = null; // Menyimpan file hasil drag & drop
 let isCameraActive = false;
 let mediaStream = null; // Untuk stream kamera
-let lastLocationData = null; // Menyimpan lokasi terakhir untuk retroactive save
 
 // ============================================================================
 // 1. AUTENTIKASI (GOOGLE IDENTITY SERVICES)
@@ -151,14 +147,6 @@ function renderGoogleButtons() {
         );
     }
     
-    // Render tombol bujukan di hasil (jika ada)
-    if (googleLoginBtnPrompt) {
-        google.accounts.id.renderButton(
-            googleLoginBtnPrompt,
-            { theme: "filled_blue", size: "large", text: "continue_with", shape: "pill" }
-        );
-    }
-
     // Render tombol di Modal Peringatan (jika ada)
     if (googleLoginModalBtn) {
         google.accounts.id.renderButton(
@@ -196,16 +184,6 @@ async function handleCredentialResponse(response) {
             updateAuthUI();
             loginModal.classList.add("hidden");
             if (guestLoginModal) guestLoginModal.classList.add("hidden");
-
-            // Jika login dilakukan dari layar Hasil Deteksi (tombol simpan permanen)
-            const loginPromptArea = document.getElementById("login-prompt-area");
-            if (loginPromptArea && !loginPromptArea.classList.contains("hidden")) {
-                loginPromptArea.classList.add("hidden");
-                if (currentFile) {
-                    // Kirim ulang deteksi di latar belakang dengan overlay pemblokir
-                    silentRetroactiveSave();
-                }
-            }
             
             // Lanjutkan aksi yang tertahan (jika ada)
             if (pendingAction === "upload") {
@@ -623,39 +601,7 @@ btnDeleteSelected?.addEventListener('click', () => {
 
 
 
-// Fungsi penyokong untuk menyimpan riwayat retroaktif secara diam-diam (background)
-async function silentRetroactiveSave() {
-    if (!currentFile || !authToken) return;
-    
-    // Buat overlay pemblokir layar agar user tidak pindah halaman sebelum selesai
-    const overlay = document.createElement("div");
-    overlay.className = "fixed inset-0 bg-gray-900/90 z-[9999] flex flex-col justify-center items-center backdrop-blur-sm";
-    overlay.innerHTML = `<i class="fa-solid fa-cloud-arrow-up animate-bounce text-6xl text-emerald-400 mb-6"></i><p class="text-white font-bold text-2xl">Menyinkronkan Riwayat...</p><p class="text-gray-300 text-sm mt-2">Mohon tunggu sebentar, sedang mengamankan data Anda ke Cloud.</p>`;
-    document.body.appendChild(overlay);
 
-    try {
-        // Gunakan lokasi terakhir jika ada, untuk mempercepat proses
-        const locData = lastLocationData || await getLocation();
-        const formData = new FormData();
-        formData.append("file", currentFile);
-        if(locData.location) formData.append("location", locData.location);
-        if(locData.lat) formData.append("lat", locData.lat);
-        if(locData.lng) formData.append("lng", locData.lng);
-
-        const res = await fetch(`${BACKEND_URL}/predict`, {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${authToken}` },
-            body: formData
-        });
-        if (res.ok) {
-            showToast("Riwayat berhasil disimpan permanen secara otomatis!", false, 4000);
-        }
-    } catch(e) {
-        console.error("Silent save error", e);
-    } finally {
-        document.body.removeChild(overlay);
-    }
-}
 
 // ============================================================================
 // 3. LOGIKA UPLOAD GAMBAR & KAMERA
@@ -894,7 +840,6 @@ detectBtn?.addEventListener("click", async () => {
 
     // Ambil lokasi (jika ditolak, otomatis "Tidak Diketahui")
     const locData = await getLocation();
-    lastLocationData = locData; // Simpan untuk retroactive save
 
     detectBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Proses AI sedang berjalan...';
 

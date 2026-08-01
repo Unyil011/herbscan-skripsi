@@ -195,6 +195,18 @@ async function handleCredentialResponse(response) {
             updateAuthUI();
             loginModal.classList.add("hidden");
             if (guestLoginModal) guestLoginModal.classList.add("hidden");
+
+            // Jika login dilakukan dari layar Hasil Deteksi (tombol simpan permanen)
+            const loginPromptArea = document.getElementById("login-prompt-area");
+            if (loginPromptArea && !loginPromptArea.classList.contains("hidden")) {
+                loginPromptArea.classList.add("hidden");
+                if (detectBtn && currentFile) {
+                    showToast("Menyinkronkan riwayat Anda ke Cloud...", false);
+                    // Memicu deteksi ulang. Jangan khawatir, backend akan langsung 
+                    // membaca dari MD5 Cache (0 detik) lalu menyimpannya ke Database
+                    detectBtn.click(); 
+                }
+            }
             
             // Lanjutkan aksi yang tertahan (jika ada)
             if (pendingAction === "upload") {
